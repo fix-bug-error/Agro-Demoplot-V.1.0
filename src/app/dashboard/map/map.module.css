@@ -9,12 +9,14 @@
   overflow: hidden;
   /* Ensure the map container respects its parent's boundaries */
   max-width: 100%;
-  /* Prevent scrolling conflicts on mobile */
-  touch-action: pan-x pan-y;
+  /* Allow proper touch handling for gesture handling */
+  touch-action: auto;
   /* Ensure map container doesn't interfere with page layout */
   contain: layout style paint;
-  /* Prevent map from capturing scroll gestures */
+  /* Allow proper scrolling */
   scroll-behavior: auto;
+  /* Allow all touch actions for Leaflet */
+  touch-action: manipulation;
 }
 
 /* Mobile-specific adjustments */
@@ -24,18 +26,20 @@
     position: relative;
     /* Ensure map respects mobile screen boundaries */
     max-width: 100vw;
-    /* Ensure proper positioning on mobile */
-    touch-action: manipulation;
+    /* Allow proper touch gestures for Leaflet */
+    touch-action: auto;
     /* Prevent map from capturing scroll events */
     overscroll-behavior: contain;
     /* Ensure map container respects mobile constraints */
     contain: layout style paint;
-    /* Prevent map from interfering with page scroll */
+    /* Allow proper scrolling */
     scroll-behavior: auto;
     /* Reset any margin that might cause vertical shift */
     margin: 0;
     /* Reset any padding that might cause vertical shift */
     padding: 0;
+    /* Allow all touch actions for Leaflet */
+    touch-action: manipulation;
   }
   
   /* Ensure map controls don't overlap with header */
@@ -70,14 +74,16 @@
     max-width: 100%;
     width: 100%;
     height: 100%;
-    /* Ensure proper touch handling on mobile */
-    touch-action: manipulation;
+    /* Allow proper touch gestures for Leaflet */
+    touch-action: auto;
     /* Prevent map from capturing scroll events */
     overscroll-behavior: contain;
     /* Ensure container respects mobile constraints */
     contain: layout style paint;
-    /* Prevent map from interfering with page scroll */
+    /* Allow proper scrolling */
     scroll-behavior: auto;
+    /* Allow all touch actions for Leaflet */
+    touch-action: manipulation;
   }
   
   /* Adjust map panes to respect container boundaries */
@@ -229,6 +235,7 @@
   width: 40px;
   height: 40px;
   background-size: 40px 40px;
+  z-index: 1000;
 }
 
 .mapContainer :global(.leaflet-gesture-handling-error) {
@@ -239,6 +246,12 @@
   font-size: 14px;
   text-align: center;
   z-index: 1000;
+  max-width: 80%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none; /* Allow touch events to pass through */
+  position: absolute;
+  top: 50%;
 }
 
 /* Ensure gesture handling instructions are readable */
@@ -250,6 +263,12 @@
   font-size: 14px;
   text-align: center;
   z-index: 1000;
+  max-width: 80%;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none; /* Allow touch events to pass through */
+  position: absolute;
+  top: 50%;
 }
 
 /* Fix for toggle button positioning - moved to top right to avoid conflict */
@@ -298,5 +317,15 @@
   .mapContainer + button:hover,
   .mapContainer ~ button:hover {
     background: #4a5568;
+  }
+  
+  .mapContainer :global(.leaflet-gesture-handling-error) {
+    background-color: rgba(0, 0, 0, 0.9);
+    color: white;
+  }
+  
+  .mapContainer :global(.leaflet-gesture-handling-instructions) {
+    background-color: rgba(0, 0, 0, 0.9);
+    color: white;
   }
 }

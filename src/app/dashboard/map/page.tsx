@@ -248,7 +248,7 @@ export default function MapPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-96 rounded-lg bg-gray-100 border-2 border-dashed flex items-center justify-center relative z-20 overflow-hidden">
+              <div className="h-96 rounded-lg bg-gray-100 border-2 border-dashed flex items-center justify-center relative z-20 overflow-hidden touch-auto">
                 {selectedPlot ? (
                   <div className="w-full h-full">
                     <MapComponent 

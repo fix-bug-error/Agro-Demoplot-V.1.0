@@ -10,10 +10,19 @@ import styles from '@/app/dashboard/map/map.module.css';
 import { useEffect, useRef, useState } from "react";
 
 // Define a type for map with gesture handling
-type ExtendedLeafletMap = LeafletMap & {
+interface ExtendedLeafletMap extends LeafletMap {
   gestureHandling?: {
     enable: () => void;
     disable: () => void;
+  };
+}
+
+// Define types for gesture handling options
+interface GestureHandlingOptions {
+  text?: {
+    touch?: string;
+    scroll?: string;
+    scrollMac?: string;
   };
 }
 
@@ -190,9 +199,17 @@ export default function MapComponent({
   useEffect(() => {
     // Fix for default marker icons in Leaflet
     if (typeof window !== 'undefined') {
-      // Initialize gesture handling if available
-      if ((L as unknown as { GestureHandling?: unknown }).GestureHandling) {
-        L.Map.addInitHook("addHandler", "gestureHandling", (L as unknown as { GestureHandling?: unknown }).GestureHandling);
+      // Initialize gesture handling
+      try {
+        console.log('Initializing gesture handling');
+        if ((L as any).GestureHandling) {
+          console.log('GestureHandling library found, adding init hook');
+          L.Map.addInitHook("addHandler", "gestureHandling", (L as any).GestureHandling);
+        } else {
+          console.log('GestureHandling library not found');
+        }
+      } catch (error) {
+        console.error('Error initializing gesture handling:', error);
       }
 
       const iconPrototype = L.Icon.Default.prototype as unknown as Record<string, unknown>;
@@ -218,9 +235,11 @@ export default function MapComponent({
     // Only prevent pull-to-refresh on mobile
     const handleTouchStart = (e: Event) => {
       if (e.target instanceof Element && e.target.closest('.mapContainer')) {
-        // Prevent pull-to-refresh on mobile
-        if ('touches' in e && (e as TouchEvent).touches.length > 1) {
-          e.preventDefault();
+        // Allow gesture handling to work properly
+        // Only prevent pull-to-refresh on mobile when not using two fingers
+        if ('touches' in e && (e as TouchEvent).touches.length === 1) {
+          // Don't prevent default for single touch to allow map gestures
+          return;
         }
       }
     };
@@ -228,7 +247,7 @@ export default function MapComponent({
     // Add event listeners
     const mapElement = document.querySelector('.mapContainer');
     if (mapElement) {
-      mapElement.addEventListener('touchstart', handleTouchStart as EventListener, { passive: false });
+      mapElement.addEventListener('touchstart', handleTouchStart as EventListener, { passive: true });
     }
 
     return () => {
@@ -261,25 +280,58 @@ export default function MapComponent({
     }
   }, []);
 
+  // Ensure gesture handling is enabled after component mounts
+  useEffect(() => {
+    if (typeof window !== 'undefined' && mapRef.current) {
+      console.log('Ensuring gesture handling is enabled after mount');
+      const timeoutId = setTimeout(() => {
+        if (mapRef.current) {
+          try {
+            // Enable gesture handling directly on the map instance
+            if ((mapRef.current as any).gestureHandling) {
+              (mapRef.current as any).gestureHandling.enable();
+              console.log('Gesture handling re-enabled after mount');
+            } else {
+              console.log('Gesture handling not found on map instance after mount');
+            }
+          } catch (error) {
+            console.error('Error re-enabling gesture handling:', error);
+          }
+        }
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, []);
+
   const toggleBasemap = () => {
     setBasemap(prev => prev === 'osm' ? 'esri' : 'osm');
   };
 
   // Setup map after it's ready
   const handleMapReady = (map: L.Map) => {
-    // Store map reference with type assertion
-    mapRef.current = map as ExtendedLeafletMap;
+    // Store map reference
+    mapRef.current = map;
+    
+    console.log('Map ready, attempting to enable gesture handling');
     
     // Small delay to ensure map is fully initialized
     setTimeout(() => {
       try {
-        // Check if gesture handling is available and enable it
-        const mapWithGesture = map as ExtendedLeafletMap;
-        if (mapWithGesture.gestureHandling) {
-          mapWithGesture.gestureHandling.enable();
-          console.log('Gesture handling enabled');
+        // Enable gesture handling directly on the map instance
+        if ((map as any).gestureHandling) {
+          (map as any).gestureHandling.enable();
+          console.log('Gesture handling enabled successfully');
         } else {
-          console.log('Gesture handling not available on map instance');
+          // Try alternative initialization
+          if ((L as any).GestureHandling) {
+            // Enable gesture handling with options
+            (map as any).gestureHandling = new (L as any).GestureHandling(map);
+            (map as any).gestureHandling.enable();
+            console.log('Gesture handling enabled with manual initialization');
+          } else {
+            console.log('Gesture handling not available - library not loaded properly');
+          }
         }
       } catch (error) {
         console.error('Error enabling gesture handling:', error);
@@ -305,6 +357,19 @@ export default function MapComponent({
           zoomControl={true}
           // Set max zoom level to 20
           maxZoom={20}
+          // Enable gesture handling options
+          whenCreated={handleMapReady}
+          // Additional options for better mobile support
+          tap={true}
+          dragging={true}
+          zoomSnap={0.25}
+          zoomDelta={0.25}
+          // Touch and gesture options
+          touchZoom={true}
+          doubleClickZoom={true}
+          scrollWheelZoom={true}
+          boxZoom={true}
+          keyboard={true}
         >
           {basemap === 'osm' ? (
             <TileLayer
