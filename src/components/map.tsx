@@ -203,18 +203,6 @@ export default function MapComponent({
     if (typeof window === 'undefined') return;
     
     // Fix for default marker icons in Leaflet
-    try {
-      console.log('Initializing gesture handling');
-      if ((L as unknown as { GestureHandling?: GestureHandling }).GestureHandling) {
-        console.log('GestureHandling library found, adding init hook');
-        L.Map.addInitHook("addHandler", "gestureHandling", (L as unknown as { GestureHandling?: GestureHandling }).GestureHandling);
-      } else {
-        console.log('GestureHandling library not found');
-      }
-    } catch (error) {
-      console.error('Error initializing gesture handling:', error);
-    }
-
     const iconPrototype = L.Icon.Default.prototype as unknown as Record<string, unknown>;
     delete iconPrototype._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -286,31 +274,6 @@ export default function MapComponent({
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // Ensure gesture handling is enabled after component mounts
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined' || !mapRef.current) return;
-    
-    console.log('Ensuring gesture handling is enabled after mount');
-    const timeoutId = setTimeout(() => {
-      if (mapRef.current) {
-        try {
-          // Enable gesture handling directly on the map instance
-          if ((mapRef.current as unknown as ExtendedLeafletMap).gestureHandling) {
-            (mapRef.current as unknown as ExtendedLeafletMap).gestureHandling!.enable();
-            console.log('Gesture handling re-enabled after mount');
-          } else {
-            console.log('Gesture handling not found on map instance after mount');
-          }
-        } catch (error) {
-          console.error('Error re-enabling gesture handling:', error);
-        }
-      }
-    }, 1000);
-    
-    return () => clearTimeout(timeoutId);
-  }, []);
-
   const toggleBasemap = () => {
     setBasemap(prev => prev === 'osm' ? 'google' : 'osm');
   };
@@ -338,15 +301,7 @@ export default function MapComponent({
           (map as unknown as ExtendedLeafletMap).gestureHandling!.enable();
           console.log('Gesture handling enabled successfully');
         } else {
-          // Try alternative initialization
-          if ((L as unknown as { GestureHandling?: GestureHandling }).GestureHandling) {
-            // Enable gesture handling with options
-            (map as unknown as ExtendedLeafletMap).gestureHandling = new (L as unknown as { GestureHandling?: GestureHandling }).GestureHandling!(map);
-            (map as unknown as ExtendedLeafletMap).gestureHandling!.enable();
-            console.log('Gesture handling enabled with manual initialization');
-          } else {
-            console.log('Gesture handling not available - library not loaded properly');
-          }
+          console.log('Gesture handling not available on map instance');
         }
       } catch (error) {
         console.error('Error enabling gesture handling:', error);
@@ -371,6 +326,8 @@ export default function MapComponent({
             handleMapReady(mapRef.current);
           }
         }}
+        // Add gesture handling options directly to the MapContainer
+        gestureHandling={true}
       >
           {basemap === 'osm' ? (
             <TileLayer
