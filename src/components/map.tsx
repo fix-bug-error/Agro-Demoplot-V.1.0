@@ -321,10 +321,11 @@ export default function MapComponent({
     mapRef.current = map;
     
     // Set initial view
-    if (plot) {
+    if (plot && plot.latitude && plot.longitude) {
       map.setView([plot.latitude, plot.longitude], 15);
     } else {
-      map.setView([0, 0], 15);
+      // Set a default view if no plot is provided
+      map.setView([0, 0], 2);
     }
     
     console.log('Map ready, attempting to enable gesture handling');
@@ -354,13 +355,15 @@ export default function MapComponent({
     
     // Re-enable default zoom controls
     if (map.zoomControl) {
-      map.zoomControl.setPosition('topleft');
+      map.zoomControl.setPosition('topright');
     }
   };
 
   return (
     <div className="relative w-full h-full">
       <MapContainer 
+        center={plot && plot.latitude && plot.longitude ? [plot.latitude, plot.longitude] : [0, 0]}
+        zoom={plot ? 15 : 2}
         className={styles.mapContainer}
         ref={mapRef}
         whenReady={() => {
