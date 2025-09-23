@@ -191,8 +191,8 @@ export default function MapComponent({
     // Fix for default marker icons in Leaflet
     if (typeof window !== 'undefined') {
       // Initialize gesture handling if available
-      if ((L as any).GestureHandling) {
-        L.Map.addInitHook("addHandler", "gestureHandling", (L as any).GestureHandling);
+      if ((L as unknown as { GestureHandling?: unknown }).GestureHandling) {
+        L.Map.addInitHook("addHandler", "gestureHandling", (L as unknown as { GestureHandling?: unknown }).GestureHandling);
       }
 
       const iconPrototype = L.Icon.Default.prototype as unknown as Record<string, unknown>;
@@ -274,8 +274,9 @@ export default function MapComponent({
     setTimeout(() => {
       try {
         // Check if gesture handling is available and enable it
-        if ((map as any).gestureHandling) {
-          (map as any).gestureHandling.enable();
+        const mapWithGesture = map as ExtendedLeafletMap;
+        if (mapWithGesture.gestureHandling) {
+          mapWithGesture.gestureHandling.enable();
           console.log('Gesture handling enabled');
         } else {
           console.log('Gesture handling not available on map instance');
