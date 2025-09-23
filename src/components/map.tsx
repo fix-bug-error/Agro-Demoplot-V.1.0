@@ -10,12 +10,12 @@ import styles from '@/app/dashboard/map/map.module.css';
 import { useEffect, useRef, useState } from "react";
 
 // Define a type for map with gesture handling
-interface ExtendedLeafletMap extends LeafletMap {
+type ExtendedLeafletMap = LeafletMap & {
   gestureHandling?: {
     enable: () => void;
     disable: () => void;
   };
-}
+};
 
 // Define types for gesture handling options
 interface GestureHandlingOptions {
@@ -23,6 +23,14 @@ interface GestureHandlingOptions {
     touch?: string;
     scroll?: string;
     scrollMac?: string;
+  };
+}
+
+// Define type for GestureHandling class
+interface GestureHandling {
+  new (map: L.Map): {
+    enable: () => void;
+    disable: () => void;
   };
 }
 
@@ -187,7 +195,7 @@ export default function MapComponent({
   farmer: Farmer | null | undefined;
 }) {
   const mapRef = useRef<L.Map>(null);
-  const [basemap, setBasemap] = useState<'osm' | 'esri'>('osm');
+  const [basemap, setBasemap] = useState<'osm' | 'google'>('osm');
 
   const [isClient, setIsClient] = useState(false);
 
@@ -202,9 +210,9 @@ export default function MapComponent({
       // Initialize gesture handling
       try {
         console.log('Initializing gesture handling');
-        if ((L as any).GestureHandling) {
+        if ((L as unknown as { GestureHandling?: GestureHandling }).GestureHandling) {
           console.log('GestureHandling library found, adding init hook');
-          L.Map.addInitHook("addHandler", "gestureHandling", (L as any).GestureHandling);
+          L.Map.addInitHook("addHandler", "gestureHandling", (L as unknown as { GestureHandling?: GestureHandling }).GestureHandling);
         } else {
           console.log('GestureHandling library not found');
         }
@@ -288,8 +296,8 @@ export default function MapComponent({
         if (mapRef.current) {
           try {
             // Enable gesture handling directly on the map instance
-            if ((mapRef.current as any).gestureHandling) {
-              (mapRef.current as any).gestureHandling.enable();
+            if ((mapRef.current as unknown as ExtendedLeafletMap).gestureHandling) {
+              (mapRef.current as unknown as ExtendedLeafletMap).gestureHandling!.enable();
               console.log('Gesture handling re-enabled after mount');
             } else {
               console.log('Gesture handling not found on map instance after mount');
@@ -305,7 +313,7 @@ export default function MapComponent({
   }, []);
 
   const toggleBasemap = () => {
-    setBasemap(prev => prev === 'osm' ? 'esri' : 'osm');
+    setBasemap(prev => prev === 'osm' ? 'google' : 'osm');
   };
 
   // Setup map after it's ready
@@ -313,21 +321,28 @@ export default function MapComponent({
     // Store map reference
     mapRef.current = map;
     
+    // Set initial view
+    if (plot) {
+      map.setView([plot.latitude, plot.longitude], 15);
+    } else {
+      map.setView([0, 0], 15);
+    }
+    
     console.log('Map ready, attempting to enable gesture handling');
     
     // Small delay to ensure map is fully initialized
     setTimeout(() => {
       try {
         // Enable gesture handling directly on the map instance
-        if ((map as any).gestureHandling) {
-          (map as any).gestureHandling.enable();
+        if ((map as unknown as ExtendedLeafletMap).gestureHandling) {
+          (map as unknown as ExtendedLeafletMap).gestureHandling!.enable();
           console.log('Gesture handling enabled successfully');
         } else {
           // Try alternative initialization
-          if ((L as any).GestureHandling) {
+          if ((L as unknown as { GestureHandling?: GestureHandling }).GestureHandling) {
             // Enable gesture handling with options
-            (map as any).gestureHandling = new (L as any).GestureHandling(map);
-            (map as any).gestureHandling.enable();
+            (map as unknown as ExtendedLeafletMap).gestureHandling = new (L as unknown as { GestureHandling?: GestureHandling }).GestureHandling!(map);
+            (map as unknown as ExtendedLeafletMap).gestureHandling!.enable();
             console.log('Gesture handling enabled with manual initialization');
           } else {
             console.log('Gesture handling not available - library not loaded properly');
@@ -340,7 +355,7 @@ export default function MapComponent({
     
     // Re-enable default zoom controls
     if (map.zoomControl) {
-      map.zoomControl.setPosition('topright');
+      map.zoomControl.setPosition('topleft');
     }
   };
 
@@ -348,28 +363,13 @@ export default function MapComponent({
     <div className="relative w-full h-full">
       {isClient ? (
         <MapContainer 
-          key={plot?.id}
-          center={plot ? [plot.latitude, plot.longitude] : [0, 0]} 
-          zoom={15} 
           className={styles.mapContainer}
           ref={mapRef}
-          // Ensure zoom control is enabled with default settings
-          zoomControl={true}
-          // Set max zoom level to 20
-          maxZoom={20}
-          // Enable gesture handling options
-          whenCreated={handleMapReady}
-          // Additional options for better mobile support
-          tap={true}
-          dragging={true}
-          zoomSnap={0.25}
-          zoomDelta={0.25}
-          // Touch and gesture options
-          touchZoom={true}
-          doubleClickZoom={true}
-          scrollWheelZoom={true}
-          boxZoom={true}
-          keyboard={true}
+          whenReady={() => {
+            if (mapRef.current) {
+              handleMapReady(mapRef.current);
+            }
+          }}
         >
           {basemap === 'osm' ? (
             <TileLayer
@@ -378,8 +378,8 @@ export default function MapComponent({
             />
           ) : (
             <TileLayer
-              attribution='&copy; <a href="https://www.esri.com/">Esri</a> contributors'
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution='&copy; Google Maps'
+              url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
             />
           )}
           {plot && plot.polygon && formatPolygonForLeaflet(plot.polygon).length > 0 && (
@@ -412,9 +412,9 @@ export default function MapComponent({
       <button
         onClick={toggleBasemap}
         className="absolute top-2 right-2 z-20 bg-white dark:bg-gray-800 px-3 py-1 rounded shadow-md text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200"
-        aria-label={`Ganti ke ${basemap === 'osm' ? 'ESRI' : 'OSM'}`}
+        aria-label={`Ganti ke ${basemap === 'osm' ? 'Satelit' : 'OSM'}`}
       >
-        {basemap === 'osm' ? 'ESRI' : 'OSM'}
+        {basemap === 'osm' ? 'Satelit' : 'OSM'}
       </button>
     </div>
   );
