@@ -24,6 +24,8 @@ import {
   TrendingUp,
   Bug,
   Users,
+  User,
+  LandPlot,
   Calendar
 } from "lucide-react";
 
@@ -177,12 +179,27 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Baris 1: Kelompok Tani & Total Petani */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full">
+                <Users className="h-5 w-5 text-purple-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Kelompok Tani</p>
+                <p className="text-2xl font-bold">{farmerGroupData.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                <BarChart3 className="h-5 w-5 text-blue-500" />
+                <User className="h-5 w-5 text-blue-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Petani</p>
@@ -192,11 +209,12 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
         
+        {/* Baris 2: Total Plot & Ancaman Terdeteksi */}
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
-                <TrendingUp className="h-5 w-5 text-green-500" />
+                <LandPlot className="h-5 w-5 text-green-500" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Plot</p>
@@ -215,20 +233,6 @@ export default function AnalyticsPage() {
               <div>
                 <p className="text-sm text-muted-foreground">Ancaman Terdeteksi</p>
                 <p className="text-2xl font-bold">{analyticsData.totalPestRecords}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full">
-                <Users className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Kelompok Tani</p>
-                <p className="text-2xl font-bold">{farmerGroupData.length}</p>
               </div>
             </div>
           </CardContent>
