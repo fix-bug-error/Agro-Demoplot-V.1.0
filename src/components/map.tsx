@@ -197,37 +197,31 @@ export default function MapComponent({
   const mapRef = useRef<L.Map>(null);
   const [basemap, setBasemap] = useState<'osm' | 'google'>('osm');
 
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   // Initialize gesture handling and fix marker icons on the client side
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     // Fix for default marker icons in Leaflet
-    if (typeof window !== 'undefined') {
-      // Initialize gesture handling
-      try {
-        console.log('Initializing gesture handling');
-        if ((L as unknown as { GestureHandling?: GestureHandling }).GestureHandling) {
-          console.log('GestureHandling library found, adding init hook');
-          L.Map.addInitHook("addHandler", "gestureHandling", (L as unknown as { GestureHandling?: GestureHandling }).GestureHandling);
-        } else {
-          console.log('GestureHandling library not found');
-        }
-      } catch (error) {
-        console.error('Error initializing gesture handling:', error);
+    try {
+      console.log('Initializing gesture handling');
+      if ((L as unknown as { GestureHandling?: GestureHandling }).GestureHandling) {
+        console.log('GestureHandling library found, adding init hook');
+        L.Map.addInitHook("addHandler", "gestureHandling", (L as unknown as { GestureHandling?: GestureHandling }).GestureHandling);
+      } else {
+        console.log('GestureHandling library not found');
       }
-
-      const iconPrototype = L.Icon.Default.prototype as unknown as Record<string, unknown>;
-      delete iconPrototype._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-      });
+    } catch (error) {
+      console.error('Error initializing gesture handling:', error);
     }
+
+    const iconPrototype = L.Icon.Default.prototype as unknown as Record<string, unknown>;
+    delete iconPrototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
   }, []);
 
   // Log polygon data for debugging
@@ -240,6 +234,9 @@ export default function MapComponent({
 
   // Add mobile gesture handling
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     // Only prevent pull-to-refresh on mobile
     const handleTouchStart = (e: Event) => {
       if (e.target instanceof Element && e.target.closest('.mapContainer')) {
@@ -276,40 +273,42 @@ export default function MapComponent({
 
   // Setup map after it's ready
   useEffect(() => {
-    if (typeof window !== 'undefined' && mapRef.current) {
-      // Tunggu sebentar untuk memastikan map benar-benar siap
-      const timeoutId = setTimeout(() => {
-        if (mapRef.current) {
-          handleMapReady(mapRef.current);
-        }
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
-    }
+    // Only run on client side
+    if (typeof window === 'undefined' || !mapRef.current) return;
+    
+    // Tunggu sebentar untuk memastikan map benar-benar siap
+    const timeoutId = setTimeout(() => {
+      if (mapRef.current) {
+        handleMapReady(mapRef.current);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // Ensure gesture handling is enabled after component mounts
   useEffect(() => {
-    if (typeof window !== 'undefined' && mapRef.current) {
-      console.log('Ensuring gesture handling is enabled after mount');
-      const timeoutId = setTimeout(() => {
-        if (mapRef.current) {
-          try {
-            // Enable gesture handling directly on the map instance
-            if ((mapRef.current as unknown as ExtendedLeafletMap).gestureHandling) {
-              (mapRef.current as unknown as ExtendedLeafletMap).gestureHandling!.enable();
-              console.log('Gesture handling re-enabled after mount');
-            } else {
-              console.log('Gesture handling not found on map instance after mount');
-            }
-          } catch (error) {
-            console.error('Error re-enabling gesture handling:', error);
+    // Only run on client side
+    if (typeof window === 'undefined' || !mapRef.current) return;
+    
+    console.log('Ensuring gesture handling is enabled after mount');
+    const timeoutId = setTimeout(() => {
+      if (mapRef.current) {
+        try {
+          // Enable gesture handling directly on the map instance
+          if ((mapRef.current as unknown as ExtendedLeafletMap).gestureHandling) {
+            (mapRef.current as unknown as ExtendedLeafletMap).gestureHandling!.enable();
+            console.log('Gesture handling re-enabled after mount');
+          } else {
+            console.log('Gesture handling not found on map instance after mount');
           }
+        } catch (error) {
+          console.error('Error re-enabling gesture handling:', error);
         }
-      }, 1000);
-      
-      return () => clearTimeout(timeoutId);
-    }
+      }
+    }, 1000);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const toggleBasemap = () => {
@@ -361,16 +360,15 @@ export default function MapComponent({
 
   return (
     <div className="relative w-full h-full">
-      {isClient ? (
-        <MapContainer 
-          className={styles.mapContainer}
-          ref={mapRef}
-          whenReady={() => {
-            if (mapRef.current) {
-              handleMapReady(mapRef.current);
-            }
-          }}
-        >
+      <MapContainer 
+        className={styles.mapContainer}
+        ref={mapRef}
+        whenReady={() => {
+          if (mapRef.current) {
+            handleMapReady(mapRef.current);
+          }
+        }}
+      >
           {basemap === 'osm' ? (
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -406,9 +404,6 @@ export default function MapComponent({
             </Marker>
           )}
         </MapContainer>
-      ) : (
-        <div className={styles.mapContainer} style={{ width: '100%', height: '100%' }} />
-      )}
       <button
         onClick={toggleBasemap}
         className="absolute top-2 right-2 z-20 bg-white dark:bg-gray-800 px-3 py-1 rounded shadow-md text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200"
