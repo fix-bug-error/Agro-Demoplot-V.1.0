@@ -4,19 +4,18 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-gesture-handling/dist/leaflet-gesture-handling.css";
 import { MapContainer, TileLayer, Marker, Popup, Polygon } from "react-leaflet";
 import type { Map as LeafletMap } from 'leaflet';
+import L from "leaflet";
+import 'leaflet-gesture-handling';
 import styles from '@/app/dashboard/map/map.module.css';
 import { useEffect, useRef, useState } from "react";
-import L from "leaflet";
-import "leaflet-gesture-handling";
 
-// Fix for default marker icons in Leaflet
-const iconPrototype = L.Icon.Default.prototype as unknown as Record<string, unknown>;
-delete iconPrototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+// Define a type for map with gesture handling
+type ExtendedLeafletMap = LeafletMap & {
+  gestureHandling?: {
+    enable: () => void;
+    disable: () => void;
+  };
+}
 
 // Define types for polygon data
 type PolygonData = Record<string, unknown> | unknown[] | string | null;
@@ -178,8 +177,33 @@ export default function MapComponent({
   plot: Plot | null | undefined;
   farmer: Farmer | null | undefined;
 }) {
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<L.Map>(null);
   const [basemap, setBasemap] = useState<'osm' | 'esri'>('osm');
+
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Initialize gesture handling and fix marker icons on the client side
+  useEffect(() => {
+    // Fix for default marker icons in Leaflet
+    if (typeof window !== 'undefined') {
+      // Initialize gesture handling if available
+      if ((L as any).GestureHandling) {
+        L.Map.addInitHook("addHandler", "gestureHandling", (L as any).GestureHandling);
+      }
+
+      const iconPrototype = L.Icon.Default.prototype as unknown as Record<string, unknown>;
+      delete iconPrototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+      });
+    }
+  }, []);
 
   // Log polygon data for debugging
   useEffect(() => {
@@ -190,37 +214,29 @@ export default function MapComponent({
   }, [plot]);
 
   // Add mobile gesture handling
-    useEffect(() => {
-      // Prevent map from capturing scroll events on mobile
-      const handleTouchStart = (e: Event) => {
-        if (e.target instanceof Element && e.target.closest('.mapContainer')) {
-          document.body.style.overflow = 'hidden';
-          // Prevent pull-to-refresh on mobile
-          if ('touches' in e && (e as TouchEvent).touches.length > 1) {
-            e.preventDefault();
-          }
+  useEffect(() => {
+    // Only prevent pull-to-refresh on mobile
+    const handleTouchStart = (e: Event) => {
+      if (e.target instanceof Element && e.target.closest('.mapContainer')) {
+        // Prevent pull-to-refresh on mobile
+        if ('touches' in e && (e as TouchEvent).touches.length > 1) {
+          e.preventDefault();
         }
-      };
-
-      const handleTouchEnd = (_e: Event) => {
-        document.body.style.overflow = '';
-      };
+      }
+    };
 
     // Add event listeners
-      const mapElement = document.querySelector('.mapContainer');
-      if (mapElement) {
-        mapElement.addEventListener('touchstart', handleTouchStart as EventListener, { passive: false });
-        mapElement.addEventListener('touchend', handleTouchEnd as EventListener, { passive: false });
-      }
+    const mapElement = document.querySelector('.mapContainer');
+    if (mapElement) {
+      mapElement.addEventListener('touchstart', handleTouchStart as EventListener, { passive: false });
+    }
 
-      return () => {
-        // Clean up event listeners
-        if (mapElement) {
-          mapElement.removeEventListener('touchstart', handleTouchStart as EventListener);
-          mapElement.removeEventListener('touchend', handleTouchEnd as EventListener);
-        }
-        document.body.style.overflow = '';
-      };
+    return () => {
+      // Clean up event listeners
+      if (mapElement) {
+        mapElement.removeEventListener('touchstart', handleTouchStart as EventListener);
+      }
+    };
   }, []);
 
   // Update map view when plot changes
@@ -231,102 +247,102 @@ export default function MapComponent({
     }
   }, [plot]);
 
+  // Setup map after it's ready
+  useEffect(() => {
+    if (typeof window !== 'undefined' && mapRef.current) {
+      // Tunggu sebentar untuk memastikan map benar-benar siap
+      const timeoutId = setTimeout(() => {
+        if (mapRef.current) {
+          handleMapReady(mapRef.current);
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, []);
+
   const toggleBasemap = () => {
     setBasemap(prev => prev === 'osm' ? 'esri' : 'osm');
   };
 
   // Setup map after it's ready
-  const handleMapReady = () => {
-    if (mapRef.current) {
-      const leafletMap = mapRef.current as LeafletMap & { 
-        gestureHandling?: { enable: () => void },
-        dragging: { disable: () => void; enable: () => void }
-      };
-      
-      // Add gesture handling
-      if (leafletMap.gestureHandling) {
-        leafletMap.gestureHandling.enable();
+  const handleMapReady = (map: L.Map) => {
+    // Store map reference with type assertion
+    mapRef.current = map as ExtendedLeafletMap;
+    
+    // Small delay to ensure map is fully initialized
+    setTimeout(() => {
+      try {
+        // Check if gesture handling is available and enable it
+        if ((map as any).gestureHandling) {
+          (map as any).gestureHandling.enable();
+          console.log('Gesture handling enabled');
+        } else {
+          console.log('Gesture handling not available on map instance');
+        }
+      } catch (error) {
+        console.error('Error enabling gesture handling:', error);
       }
-      
-      // Re-enable default zoom controls
-      if (leafletMap.zoomControl) {
-        leafletMap.zoomControl.setPosition('topright');
-      }
-      
-      // Disable map dragging when the user is scrolling the page
-      leafletMap.dragging.disable();
-      
-      // Re-enable dragging when the user touches the map
-      leafletMap.getContainer().addEventListener('touchstart', () => {
-        leafletMap.dragging.enable();
-      });
-      
-      // Disable dragging when the user's touch ends
-      leafletMap.getContainer().addEventListener('touchend', () => {
-        leafletMap.dragging.disable();
-      });
-      
-      // Also handle mouse events for desktop
-      leafletMap.getContainer().addEventListener('mouseenter', () => {
-        leafletMap.dragging.enable();
-      });
-      
-      leafletMap.getContainer().addEventListener('mouseleave', () => {
-        leafletMap.dragging.disable();
-      });
+    }, 500);
+    
+    // Re-enable default zoom controls
+    if (map.zoomControl) {
+      map.zoomControl.setPosition('topright');
     }
   };
 
   return (
     <div className="relative w-full h-full">
-      <MapContainer 
-        key={plot?.id}
-        center={plot ? [plot.latitude, plot.longitude] : [0, 0]} 
-        zoom={15} 
-        className={styles.mapContainer}
-        ref={mapRef}
-        // Ensure zoom control is enabled with default settings
-        zoomControl={true}
-        // Set max zoom level to 20
-        maxZoom={20}
-        // Prevent map from interfering with page scroll
-        whenReady={handleMapReady}
-      >
-        {basemap === 'osm' ? (
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-        ) : (
-          <TileLayer
-            attribution='&copy; <a href="https://www.esri.com/">Esri</a> contributors'
-            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          />
-        )}
-        {plot && plot.polygon && formatPolygonForLeaflet(plot.polygon).length > 0 && (
-          <Polygon 
-            positions={formatPolygonForLeaflet(plot.polygon)} 
-            color="#3b82f6"
-            fillColor="#3b82f6"
-            fillOpacity={0.2}
-            weight={2}
-          >
-            <Popup>
-              <b>Batas Plot {plot.plot_name}</b><br />
-              Luas: {plot.area_hectares} ha
-            </Popup>
-          </Polygon>
-        )}
-        {plot && (
-          <Marker position={[plot.latitude, plot.longitude]}>
-            <Popup>
-              <b>{plot.plot_name}</b><br />
-              {farmer ? farmer.full_name : "Petani tidak ditemukan"}<br />
-              Luas: {plot.area_hectares} ha
-            </Popup>
-          </Marker>
-        )}
-      </MapContainer>
+      {isClient ? (
+        <MapContainer 
+          key={plot?.id}
+          center={plot ? [plot.latitude, plot.longitude] : [0, 0]} 
+          zoom={15} 
+          className={styles.mapContainer}
+          ref={mapRef}
+          // Ensure zoom control is enabled with default settings
+          zoomControl={true}
+          // Set max zoom level to 20
+          maxZoom={20}
+        >
+          {basemap === 'osm' ? (
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+          ) : (
+            <TileLayer
+              attribution='&copy; <a href="https://www.esri.com/">Esri</a> contributors'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            />
+          )}
+          {plot && plot.polygon && formatPolygonForLeaflet(plot.polygon).length > 0 && (
+            <Polygon 
+              positions={formatPolygonForLeaflet(plot.polygon)} 
+              color="#3b82f6"
+              fillColor="#3b82f6"
+              fillOpacity={0.2}
+              weight={2}
+            >
+              <Popup>
+                <b>Batas Plot {plot.plot_name}</b><br />
+                Luas: {plot.area_hectares} ha
+              </Popup>
+            </Polygon>
+          )}
+          {plot && (
+            <Marker position={[plot.latitude, plot.longitude]}>
+              <Popup>
+                <b>{plot.plot_name}</b><br />
+                {farmer ? farmer.full_name : "Petani tidak ditemukan"}<br />
+                Luas: {plot.area_hectares} ha
+              </Popup>
+            </Marker>
+          )}
+        </MapContainer>
+      ) : (
+        <div className={styles.mapContainer} style={{ width: '100%', height: '100%' }} />
+      )}
       <button
         onClick={toggleBasemap}
         className="absolute top-2 right-2 z-20 bg-white dark:bg-gray-800 px-3 py-1 rounded shadow-md text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200"
