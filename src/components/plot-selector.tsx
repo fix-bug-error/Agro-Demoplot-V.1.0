@@ -42,7 +42,7 @@ export function PlotSelector({ plots, selectedPlot, onPlotSelect }: PlotSelector
       <DropdownMenuTrigger asChild>
         <Button 
           variant="outline" 
-          className="flex items-center gap-2 px-3 py-2 h-9 font-normal border-border hover:bg-accent hover:text-accent-foreground"
+          className="flex items-center gap-2 px-3 py-2 h-9 font-normal border-border hover:bg-accent hover:text-accent-foreground w-[160px]"
         >
           <LandPlot className="h-4 w-4" />
           <span className="truncate max-w-[120px]">
@@ -53,7 +53,7 @@ export function PlotSelector({ plots, selectedPlot, onPlotSelect }: PlotSelector
       </DropdownMenuTrigger>
       <DropdownMenuContent 
         align="start" 
-        className="w-[200px] max-h-[300px] overflow-y-auto"
+        className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto"
       >
         {sortedPlots.map((plot) => (
           <DropdownMenuItem

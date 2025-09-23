@@ -97,6 +97,13 @@ export function Sidebar() {
             })}
           </nav>
         </div>
+        <div className="p-4 border-t">
+          <img 
+            src="/logoRP.svg" 
+            alt="RUMAHPETAni Logo" 
+            className="h-6 w-auto"
+          />
+        </div>
       </div>
     </TooltipProvider>
   );
@@ -136,6 +143,13 @@ export function MobileSidebar() {
               );
             })}
           </nav>
+        </div>
+        <div className="p-4 border-t">
+          <img 
+            src="/logoRP.svg" 
+            alt="RUMAHPETAni Logo" 
+            className="h-6 w-auto"
+          />
         </div>
       </div>
     </TooltipProvider>

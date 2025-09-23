@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Plot } from "@/types";
-import { LandPlot } from "lucide-react";
+import { LandPlot, ChevronDown } from "lucide-react";
 
 interface MobilePlotSelectorProps {
   plots: Plot[];
@@ -40,23 +38,33 @@ export function MobilePlotSelector({ plots, selectedPlot, onPlotSelect }: Mobile
   });
 
   return (
-    <div className="flex items-center gap-2">
-      <LandPlot className="h-4 w-4 text-muted-foreground" />
-      <Select 
-        value={selectedPlot?.toString() || ""} 
-        onValueChange={(value) => onPlotSelect(Number(value))}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2 px-3 py-2 h-9 font-normal border-border hover:bg-accent hover:text-accent-foreground w-[160px]"
+        >
+          <LandPlot className="h-4 w-4" />
+          <span className="truncate max-w-[120px]">
+            {currentPlot ? currentPlot.plot_name : "Select Plot"}
+          </span>
+          <ChevronDown className="h-4 w-4 ml-1" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="start" 
+        className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[300px] overflow-y-auto"
       >
-        <SelectTrigger className="w-[150px]">
-          <SelectValue placeholder="Select Plot" />
-        </SelectTrigger>
-        <SelectContent>
-          {sortedPlots.map((plot) => (
-            <SelectItem key={plot.id} value={plot.id.toString()}>
-              {plot.plot_name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+        {sortedPlots.map((plot) => (
+          <DropdownMenuItem
+            key={plot.id}
+            onSelect={() => onPlotSelect(plot.id)}
+            className="py-2"
+          >
+            {plot.plot_name}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

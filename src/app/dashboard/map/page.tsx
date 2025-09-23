@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Image, ImageOff, ChevronUp, ChevronDown, X } from "lucide-react";
+import { MapPin, LandPlot, Cherry, Image, ImageOff, ChevronUp, ChevronDown, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
@@ -42,6 +42,7 @@ type Plot = {
   number_of_coffee: number;
   number_of_shade_trees: number;
   polygon: Record<string, unknown> | unknown[] | string | null; // Bisa dalam berbagai format JSON (GeoJSON, array, dll)
+  productivity?: number;
 };
 
 export default function MapPage() {
@@ -144,6 +145,7 @@ export default function MapPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
+       
         <h1 className="text-2xl font-bold">Informasi Kebun</h1>
       </div>
 
@@ -164,7 +166,11 @@ export default function MapPage() {
               onClick={() => setIsPlotListMinimized(!isPlotListMinimized)}
             >
               <div className="flex justify-between items-center">
-                <CardTitle>Daftar Plot</CardTitle>
+                 
+                <CardTitle className="flex items-center gap-2">
+                  <LandPlot className="h-5 w-5" />
+                  Daftar Plot
+                </CardTitle>
                 {isPlotListMinimized ? (
                   <ChevronDown className="h-5 w-5" />
                 ) : (
@@ -347,13 +353,31 @@ export default function MapPage() {
                       </div>
                     )}
                   </div>
+                  
+                  {/* Coffee Production Section */}
+                  <div className="border-t pt-4 mt-4 text-center">
+                    <h4 className="font-medium text-sm mb-2 flex items-center justify-center gap-2">
+                      <Cherry className="h-4 w-4 mx-auto" />
+                      <span className="mx-auto">Produksi Kopi Per Tahun</span>
+                    </h4>
+                    {currentPlot.productivity ? (
+                      <div className="text-center">
+                        <p className="text-2xl font-bold text-green-600">{currentPlot.productivity}</p>
+                        <p className="text-xs text-muted-foreground">Kg per hektar per tahun</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">
+                        Data produksi belum tersedia
+                      </p>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <p>Pilih plot untuk melihat detail</p>
               )}
             </CardContent>
           </Card>
-
+          
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

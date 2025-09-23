@@ -43,7 +43,6 @@ type AnalyticsData = {
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("year");
-  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -73,11 +72,6 @@ export default function AnalyticsPage() {
     
     fetchData();
   }, []);
-
-  const handleExport = () => {
-    // In a real implementation, this would export the data
-    alert("Mengekspor data dalam format " + exportFormat.toUpperCase());
-  };
 
   if (loading) {
     return (
@@ -130,7 +124,6 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Analitik</h1>
-        <div className="flex flex-wrap gap-2">
         <div className="flex rounded-md overflow-hidden border">
           <Button 
             variant={timeRange === "month" ? "default" : "outline"}
@@ -156,25 +149,6 @@ export default function AnalyticsPage() {
           >
             Tahun
           </Button>
-        </div>
-        <div className="flex rounded-md overflow-hidden border">
-          <select 
-            value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value as "csv" | "excel" | "pdf")}
-            className="border-0 rounded-l-md px-3 py-2 text-sm"
-          >
-            <option value="csv">CSV</option>
-            <option value="excel">Excel</option>
-            <option value="pdf">PDF</option>
-          </select>
-          <Button 
-            onClick={handleExport}
-              className="rounded-l-none"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Ekspor
-            </Button>
-          </div>
         </div>
       </div>
 

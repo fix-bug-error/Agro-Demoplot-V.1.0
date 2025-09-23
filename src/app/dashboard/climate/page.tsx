@@ -24,6 +24,7 @@ import {
   Legend, 
   ResponsiveContainer 
 } from "recharts";
+import { DashboardWrapper } from "@/components/dashboard-wrapper";
 
 // Mock data types
 type ClimateData = {
@@ -196,122 +197,47 @@ export default function ClimatePage() {
   }
 
   return (
-    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Data Klimatologi</h1>
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <select 
-            value={selectedPlot}
-            onChange={(e) => setSelectedPlot(Number(e.target.value))}
-            className="border rounded-md px-3 py-2 text-sm max-w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-          >
-            {plots.map(plot => (
-              <option key={plot.id} value={plot.id}>
-                {plot.plot_name}
-              </option>
-            ))}
-          </select>
-          <div className="flex rounded-md overflow-hidden border w-full md:w-auto max-w-full">
-            <Button 
-              variant={timeRange === "week" ? "default" : "outline"}
-              size="sm"
-              className="rounded-none border-0 flex-1"
-              onClick={() => setTimeRange("week")}
-            >
-              Minggu
-            </Button>
-            <Button 
-              variant={timeRange === "month" ? "default" : "outline"}
-              size="sm"
-              className="rounded-none border-0 border-l flex-1"
-              onClick={() => setTimeRange("month")}
-            >
-              Bulan
-            </Button>
-            <Button 
-              variant={timeRange === "year" ? "default" : "outline"}
-              size="sm"
-              className="rounded-none border-0 border-l flex-1"
-              onClick={() => setTimeRange("year")}
-            >
-              Tahun
-            </Button>
+    <DashboardWrapper 
+      plots={plots} 
+      selectedPlot={selectedPlot} 
+      onPlotSelect={setSelectedPlot}
+    >
+      <div className="space-y-6 w-full max-w-full overflow-x-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold">Data Klimatologi</h1>
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <div className="flex rounded-md overflow-hidden border w-full md:w-auto max-w-full">
+              <Button 
+                variant={timeRange === "week" ? "default" : "outline"}
+                size="sm"
+                className="rounded-none border-0 flex-1"
+                onClick={() => setTimeRange("week")}
+              >
+                Minggu
+              </Button>
+              <Button 
+                variant={timeRange === "month" ? "default" : "outline"}
+                size="sm"
+                className="rounded-none border-0 border-l flex-1"
+                onClick={() => setTimeRange("month")}
+              >
+                Bulan
+              </Button>
+              <Button 
+                variant={timeRange === "year" ? "default" : "outline"}
+                size="sm"
+                className="rounded-none border-0 border-l flex-1"
+                onClick={() => setTimeRange("year")}
+              >
+                Tahun
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-      {/* Summary Cards */}
-      {/* Mobile: Temperature & Rainfall in first row, Humidity & Wind Speed in second row */}
-      {/* Desktop: All 4 cards in one row */}
-      <div className="hidden lg:grid lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-full">
-                <ThermometerSun className="h-5 w-5 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Suhu</p>
-                <p className="text-xs text-muted-foreground">Rata-rata</p>
-                <p className="text-xl font-bold">
-                  {averages.avgTemperature.toFixed(1)} <span className="text-sm font-normal">°C</span>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                <CloudRain className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Curah Hujan</p>
-                <p className="text-xs text-muted-foreground">Rata-rata</p>
-                <p className="text-xl font-bold">
-                  {averages.avgRainfall.toFixed(1)} <span className="text-sm font-normal">mm</span>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-cyan-100 dark:bg-cyan-900/30 p-2 rounded-full">
-                <Droplets className="h-5 w-5 text-cyan-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Kelembapan</p>
-                <p className="text-xs text-muted-foreground">Rata-rata</p>
-                <p className="text-xl font-bold">
-                  {averages.avgHumidity.toFixed(1)} <span className="text-sm font-normal">%</span>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
-                <Wind className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Kecepatan Angin</p>
-                <p className="text-xs text-muted-foreground">Rata-rata</p>
-                <p className="text-xl font-bold">
-                  {averages.avgWindSpeed.toFixed(1)} <span className="text-sm font-normal">km/h</span>
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Mobile and tablet layout */}
-      <div className="grid grid-cols-1 lg:hidden gap-4">
-        <div className="grid grid-cols-2 gap-4">
+        {/* Summary Cards */}
+        {/* Mobile: Temperature & Rainfall in first row, Humidity & Wind Speed in second row */}
+        {/* Desktop: All 4 cards in one row */}
+        <div className="hidden lg:grid lg:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -344,8 +270,6 @@ export default function ClimatePage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -379,185 +303,257 @@ export default function ClimatePage() {
             </CardContent>
           </Card>
         </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
+        {/* Mobile and tablet layout */}
+        <div className="grid grid-cols-1 lg:hidden gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-orange-100 dark:bg-orange-900/30 p-2 rounded-full">
+                    <ThermometerSun className="h-5 w-5 text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Suhu</p>
+                    <p className="text-xs text-muted-foreground">Rata-rata</p>
+                    <p className="text-xl font-bold">
+                      {averages.avgTemperature.toFixed(1)} <span className="text-sm font-normal">°C</span>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
+                    <CloudRain className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Curah Hujan</p>
+                    <p className="text-xs text-muted-foreground">Rata-rata</p>
+                    <p className="text-xl font-bold">
+                      {averages.avgRainfall.toFixed(1)} <span className="text-sm font-normal">mm</span>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-cyan-100 dark:bg-cyan-900/30 p-2 rounded-full">
+                    <Droplets className="h-5 w-5 text-cyan-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Kelembapan</p>
+                    <p className="text-xs text-muted-foreground">Rata-rata</p>
+                    <p className="text-xl font-bold">
+                      {averages.avgHumidity.toFixed(1)} <span className="text-sm font-normal">%</span>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-full">
+                    <Wind className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Kecepatan Angin</p>
+                    <p className="text-xs text-muted-foreground">Rata-rata</p>
+                    <p className="text-xl font-bold">
+                      {averages.avgWindSpeed.toFixed(1)} <span className="text-sm font-normal">km/h</span>
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ThermometerSun className="h-5 w-5" />
+                Suhu (°C)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="temperature" 
+                      name="Suhu (°C)" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CloudRain className="h-5 w-5" />
+                Curah Hujan (mm)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar 
+                      dataKey="rainfall" 
+                      name="Curah Hujan (mm)" 
+                      fill="#3b82f6" 
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Droplets className="h-5 w-5" />
+                Kelembapan (%)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="humidity" 
+                      name="Kelembapan (%)" 
+                      stroke="#06b6d4" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wind className="h-5 w-5" />
+                Kecepatan Angin (km/h)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="wind" 
+                      name="Kecepatan Angin (km/h)" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Data Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <ThermometerSun className="h-5 w-5" />
-              Suhu (°C)
+              <Calendar className="h-5 w-5" />
+              Data Historis
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="temperature" 
-                    name="Suhu (°C)" 
-                    stroke="#ef4444" 
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CloudRain className="h-5 w-5" />
-              Curah Hujan (mm)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Bar 
-                    dataKey="rainfall" 
-                    name="Curah Hujan (mm)" 
-                    fill="#3b82f6" 
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Droplets className="h-5 w-5" />
-              Kelembapan (%)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="humidity" 
-                    name="Kelembapan (%)" 
-                    stroke="#06b6d4" 
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wind className="h-5 w-5" />
-              Kecepatan Angin (km/h)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="wind" 
-                    name="Kecepatan Angin (km/h)" 
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="overflow-x-auto w-full">
+              <div className="inline-block align-middle min-w-full">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <span className="hidden sm:inline">Tanggal</span>
+                        <span className="sm:hidden">Tgl</span>
+                      </th>
+                      <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <span className="hidden sm:inline">Suhu (°C)</span>
+                        <ThermometerSun className="sm:hidden h-4 w-4" />
+                      </th>
+                      <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <span className="hidden sm:inline">Curah Hujan (mm)</span>
+                        <CloudRain className="sm:hidden h-4 w-4" />
+                      </th>
+                      <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <span className="hidden sm:inline">Kelembapan (%)</span>
+                        <Droplets className="sm:hidden h-4 w-4" />
+                      </th>
+                      <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <span className="hidden sm:inline">Angin (km/h)</span>
+                        <Wind className="sm:hidden h-4 w-4" />
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {timeRangeLimitedData.map((data) => (
+                      <tr key={data.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                        <td className="px-2 py-1 whitespace-nowrap text-xs">{new Date(data.date).toLocaleDateString('id-ID')}</td>
+                        <td className="px-2 py-1 whitespace-nowrap text-xs">{data.temperature_celsius}</td>
+                        <td className="px-2 py-1 whitespace-nowrap text-xs">{data.rainfall_mm}</td>
+                        <td className="px-2 py-1 whitespace-nowrap text-xs">{data.humidity_percent}</td>
+                        <td className="px-2 py-1 whitespace-nowrap text-xs">{data.wind_speed_kmh}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-      
-      {/* Data Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Data Historis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto w-full">
-            <div className="inline-block align-middle min-w-full">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      <span className="hidden sm:inline">Tanggal</span>
-                      <span className="sm:hidden">Tgl</span>
-                    </th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      <span className="hidden sm:inline">Suhu (°C)</span>
-                      <ThermometerSun className="sm:hidden h-4 w-4" />
-                    </th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      <span className="hidden sm:inline">Curah Hujan (mm)</span>
-                      <CloudRain className="sm:hidden h-4 w-4" />
-                    </th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      <span className="hidden sm:inline">Kelembapan (%)</span>
-                      <Droplets className="sm:hidden h-4 w-4" />
-                    </th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                      <span className="hidden sm:inline">Angin (km/h)</span>
-                      <Wind className="sm:hidden h-4 w-4" />
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {timeRangeLimitedData.map((data) => (
-                    <tr key={data.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="px-2 py-1 whitespace-nowrap text-xs">{new Date(data.date).toLocaleDateString('id-ID')}</td>
-                      <td className="px-2 py-1 whitespace-nowrap text-xs">{data.temperature_celsius}</td>
-                      <td className="px-2 py-1 whitespace-nowrap text-xs">{data.rainfall_mm}</td>
-                      <td className="px-2 py-1 whitespace-nowrap text-xs">{data.humidity_percent}</td>
-                      <td className="px-2 py-1 whitespace-nowrap text-xs">{data.wind_speed_kmh}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </DashboardWrapper>
   );
 }

@@ -13,6 +13,7 @@ create table farmers (
   address text,
   farmer_group text,
   photo_url text,
+  profile text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
@@ -37,6 +38,7 @@ create table plots (
   longitude double precision,
   area_hectares double precision,
   map_image_url text,
+  productivity double precision,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

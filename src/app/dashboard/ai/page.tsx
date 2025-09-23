@@ -14,6 +14,9 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { DashboardWrapper } from "@/components/dashboard-wrapper";
+import type { Plot } from "@/types";
+
 // Mock data types
 type Recommendation = {
   id: number;
@@ -22,13 +25,6 @@ type Recommendation = {
   recommendation_text: string;
   recommendation_date: string;
   based_on?: string[]; // What data the recommendation is based on
-};
-
-type Plot = {
-  id: number;
-  farmer_id: number;
-  plot_name: string;
-  location_name: string;
 };
 
 export default function AIRecommendationsPage() {
@@ -133,39 +129,32 @@ export default function AIRecommendationsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Rekomendasi AI</h1>
-        <Button onClick={generateRecommendation} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Menghasilkan..." : "Hasilkan Rekomendasi"}
-        </Button>
-      </div>
+    <DashboardWrapper 
+      plots={plots} 
+      selectedPlot={selectedPlot} 
+      onPlotSelect={setSelectedPlot}
+    >
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-bold">Rekomendasi AI</h1>
+          <Button onClick={generateRecommendation} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            {loading ? "Menghasilkan..." : "Hasilkan Rekomendasi"}
+          </Button>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div>
-      
-                  <h3 className="font-semibold text-lg">
-                    Berdasarkan data iklim dan monitoring terkini
-                  </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-lg">
+                      Berdasarkan data iklim dan monitoring terkini
+                    </h3>
+                  </div>
                 </div>
-                <select 
-                  value={selectedPlot}
-                  onChange={(e) => setSelectedPlot(Number(e.target.value))}
-                  className="border rounded-md px-3 py-2 text-sm max-w-[200px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-                >
-                  {plots.map(plot => (
-                    <option key={plot.id} value={plot.id}>
-                      {plot.plot_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </CardHeader>
+              </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {filteredRecommendations.length > 0 ? (
@@ -262,5 +251,6 @@ export default function AIRecommendationsPage() {
         </div>
       </div>
     </div>
+  </DashboardWrapper>
   );
 }

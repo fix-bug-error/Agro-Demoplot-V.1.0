@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, MapPin, MapPinned, Users, Thermometer, ThermometerSun, Bug, Brain, BarChart3, CloudSunRain, Coffee, LogIn } from "lucide-react";
 import { SimpleThemeToggle } from "@/components/theme-toggle";
 import { motion } from "framer-motion";
+import { BackToTopButton } from "@/components/back-to-top-button";
 
 function DashboardButton() {
   const router = useRouter();
@@ -265,6 +266,9 @@ export default function Home() {
               </div>
         </div>
       </motion.footer>
+      
+      {/* Back to Top Button */}
+      <BackToTopButton />
     </div>
   );
 }

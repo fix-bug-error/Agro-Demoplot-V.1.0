@@ -89,6 +89,7 @@ type Farmer = {
   address: string;
   farmer_group: string;
   photo_url: string;
+  profile?: string;
 };
 
 export default function FarmerPage() {
@@ -119,11 +120,18 @@ export default function FarmerPage() {
         if (farmersData && farmersData.length > 0) {
           console.log("First farmer date_of_birth:", farmersData[0].date_of_birth);
         }
-        setFarmers(farmersData);
+        
+        // Add mock profile data for demonstration
+        const farmersWithProfile = farmersData.map((farmer: Farmer) => ({
+          ...farmer,
+          profile: farmer.profile || `Halo, nama saya ${farmer.full_name}. Saya adalah seorang petani yang berdedikasi dalam mengelola lahan kopi. Saya telah berkecimpung di bidang pertanian selama bertahun-tahun dan selalu berusaha menerapkan metode terbaik untuk menghasilkan kopi berkualitas tinggi.`
+        }));
+        
+        setFarmers(farmersWithProfile);
         
         // Automatically select the first farmer if none is selected
-        if (!selectedFarmer && farmersData && farmersData.length > 0) {
-          setSelectedFarmer(farmersData[0]);
+        if (!selectedFarmer && farmersWithProfile && farmersWithProfile.length > 0) {
+          setSelectedFarmer(farmersWithProfile[0]);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -148,7 +156,7 @@ export default function FarmerPage() {
   };
 
   const handleEditFarmer = (farmer: Farmer) => {
-    setSelectedFarmer(farmer);
+    setSelectedFarmer({...farmer, profile: farmer.profile || `Halo, nama saya ${farmer.full_name}. Saya adalah seorang petani yang berdedikasi dalam mengelola lahan kopi. Saya telah berkecimpung di bidang pertanian selama bertahun-tahun dan selalu berusaha menerapkan metode terbaik untuk menghasilkan kopi berkualitas tinggi.`});
     setIsAdding(false);
   };
 
@@ -277,7 +285,8 @@ export default function FarmerPage() {
                             : "hover:bg-muted"
                         }`}
                         onClick={() => {
-                          setSelectedFarmer(farmer);
+                          const farmerWithProfile = {...farmer, profile: farmer.profile || `Halo, nama saya ${farmer.full_name}. Saya adalah seorang petani yang berdedikasi dalam mengelola lahan kopi. Saya telah berkecimpung di bidang pertanian selama bertahun-tahun dan selalu berusaha menerapkan metode terbaik untuk menghasilkan kopi berkualitas tinggi.`};
+                          setSelectedFarmer(farmerWithProfile);
                           // Auto-minimize after selection
                           setIsFarmerListMinimized(true);
                         }}
@@ -338,6 +347,30 @@ export default function FarmerPage() {
                     </p>
                   )}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Profile Introduction Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Perkenalan Singkat</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedFarmer ? (
+                <div className="space-y-4">
+                  {selectedFarmer.profile ? (
+                    <p className="text-muted-foreground">{selectedFarmer.profile}</p>
+                  ) : (
+                    <p className="text-muted-foreground italic">
+                      Belum ada perkenalan untuk petani ini.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-center py-4 text-muted-foreground">
+                  Pilih petani untuk melihat perkenalannya
+                </p>
               )}
             </CardContent>
           </Card>

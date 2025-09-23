@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import type { PestMonitoring, Plot } from "@/types";
+import { DashboardWrapper } from "@/components/dashboard-wrapper";
 
 export default function PestsPage() {
   const [monitoringData, setMonitoringData] = useState<PestMonitoring[]>([]);
@@ -202,42 +203,36 @@ export default function PestsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl font-bold">Monitoring Hama, Penyakit & Gulma</h1>
-        <Button onClick={handleAddThreat}>
-          <Plus className="h-4 w-4 mr-2" />
-          Tambah Monitoring
-        </Button>
-      </div>
+    <DashboardWrapper 
+      plots={plots} 
+      selectedPlot={selectedPlot} 
+      onPlotSelect={setSelectedPlot}
+    >
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-bold">Monitoring Hama, Penyakit & Gulma</h1>
+          <Button onClick={handleAddThreat}>
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Monitoring
+          </Button>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <select 
-                  value={selectedPlot}
-                  onChange={(e) => setSelectedPlot(Number(e.target.value))}
-                  className="border rounded-md px-3 py-2 text-sm max-w-[200px] bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600"
-                >
-                  {plots.map(plot => (
-                    <option key={plot.id} value={plot.id}>
-                      {plot.plot_name}
-                    </option>
-                  ))}
-                </select>
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Cari hama, penyakit, atau gulma..."
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Cari hama, penyakit, atau gulma..."
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
+              </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 {filteredData.length > 0 ? (
@@ -603,5 +598,6 @@ export default function PestsPage() {
         </div>
       </div>
     </div>
+  </DashboardWrapper>
   );
 }

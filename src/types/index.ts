@@ -15,6 +15,7 @@ export type Plot = {
   created_at?: string;
   updated_at?: string;
   polygon?: Record<string, unknown> | unknown[] | string | null;
+  productivity?: number;
 };
 
 export type Farmer = {
@@ -28,6 +29,7 @@ export type Farmer = {
   address: string;
   farmer_group: string;
   photo_url: string;
+  profile?: string;
 };
 
 export type ClimateData = {

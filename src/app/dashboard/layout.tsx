@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SheetTrigger } from "@/components/ui/sheet";
 import { ClientUserButton } from "@/components/client-user-button";
 import { MobilePlotSelector } from "@/components/mobile-plot-selector";
+import { BackToTopButton } from "@/components/back-to-top-button";
 
 export default function DashboardLayout({
   children,
@@ -14,13 +15,6 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Mobile sidebar */}
-      <Sheet>
-        <SheetContent side="left" className="p-0 w-64 z-50">
-          <MobileSidebar />
-        </SheetContent>
-      </Sheet>
-
       {/* Desktop sidebar */}
       <div className="hidden md:flex w-64 flex-col border-r fixed inset-y-0 z-40">
         <Sidebar />
@@ -45,7 +39,7 @@ export default function DashboardLayout({
                   </SheetContent>
                 </Sheet>
                 {/* Mobile Plot Selector */}
-                <div id="mobile-plot-selector-container" className="flex items-center" />
+                <div id="mobile-plot-selector-container" className="flex items-center min-h-[40px] min-w-[120px]" />
               </div>
               
               {/* Desktop Plot Selector Placeholder */}
@@ -66,6 +60,9 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-auto p-4 md:p-6">
           {children}
         </main>
+        
+        {/* Back to Top Button */}
+        <BackToTopButton />
       </div>
     </div>
   );
