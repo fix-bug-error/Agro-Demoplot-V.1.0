@@ -21,9 +21,19 @@ export function checkEnvironmentVariables() {
     supabase: !!(
       requiredEnvVars.supabase.url && requiredEnvVars.supabase.anonKey
     ),
-    ai: !!(requiredEnvVars.ai.openai || requiredEnvVars.ai.anthropic),
-    allConfigured: false,
+    ai: false, // Initialize with false, will be set properly below
+    allConfigured: false, // Initialize with false, will be set properly below
   };
+
+  // Different behavior on client vs server due to environment variable availability
+  if (typeof window !== 'undefined') {
+    // Client-side: We can't access server-only env vars like OPENAI_API_KEY
+    // So we'll check if NEXT_PUBLIC env vars are configured and assume AI is available
+    status.ai = true; // AI availability will be checked server-side during API calls
+  } else {
+    // Server-side: We can access the OPENAI_API_KEY
+    status.ai = !!(requiredEnvVars.ai.openai);
+  }
 
   status.allConfigured = status.clerk && status.supabase && status.ai;
 

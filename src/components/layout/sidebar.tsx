@@ -13,7 +13,8 @@ import {
   Bug, 
   Brain, 
   BarChart,
-  Leaf
+  Leaf,
+  Bot
 } from "lucide-react";
 
 import {
@@ -62,6 +63,14 @@ const navItems = [
   },
 ];
 
+const bottomNavItems = [
+  {
+    title: "Asisten AI",
+    href: "/dashboard/chat",
+    icon: Bot,
+  }
+];
+
 export function Sidebar() {
   const pathname = usePathname();
 
@@ -74,7 +83,7 @@ export function Sidebar() {
             <span className="">AgroDemoplot</span>
           </Link>
         </div>
-        <div className="flex-1 overflow-auto py-2">
+        <div className="flex flex-col justify-between flex-1 overflow-auto py-2">
           <nav className="grid items-start px-2 text-sm font-medium">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -96,13 +105,35 @@ export function Sidebar() {
               );
             })}
           </nav>
-        </div>
-        <div className="p-4 border-t">
-          <img 
-            src="/logoRP.svg" 
-            alt="RUMAHPETAni Logo" 
-            className="h-6 w-auto"
-          />
+          <div className="mt-auto">
+            {/* AI Assistant button above the logo */}
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary mx-2 mb-2 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.title}
+                </Link>
+              );
+            })}
+            <div className="p-4 border-t">
+              <img 
+                src="/logoRP.svg" 
+                alt="RUMAHPETAni Logo" 
+                className="h-6 w-auto"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </TooltipProvider>
@@ -121,7 +152,7 @@ export function MobileSidebar() {
             <span className="">AgroDemoplot</span>
           </Link>
         </div>
-        <div className="flex-1 overflow-auto py-2">
+        <div className="flex flex-col justify-between flex-1 overflow-auto py-2">
           <nav className="grid items-start px-2 text-sm font-medium">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -143,13 +174,35 @@ export function MobileSidebar() {
               );
             })}
           </nav>
-        </div>
-        <div className="p-4 border-t">
-          <img 
-            src="/logoRP.svg" 
-            alt="RUMAHPETAni Logo" 
-            className="h-6 w-auto"
-          />
+          <div className="mt-auto">
+            {/* AI Assistant button above the logo */}
+            {bottomNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary mx-2 mb-2 ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.title}
+                </Link>
+              );
+            })}
+            <div className="p-4 border-t">
+              <img 
+                src="/logoRP.svg" 
+                alt="RUMAHPETAni Logo" 
+                className="h-6 w-auto"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </TooltipProvider>

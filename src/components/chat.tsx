@@ -26,6 +26,11 @@ export default function Chat() {
     error,
     isLoading: chatLoading,
   } = useChat({
+    api: "/api/chat", // Use our custom API endpoint
+    body: {
+      // Add system instructions to make the AI behave as an agricultural expert
+      system: "Anda adalah seorang ahli agronomi profesional. Berikan jawaban yang akurat, ilmiah, dan praktis tentang topik agronomi, pertanian berkelanjutan, manajemen tanaman, kesehatan tanaman, nutrisi tanaman, teknologi pertanian, dan praktik pertanian terbaik. Gunakan istilah teknis yang sesuai tetapi tetap jelas untuk dipahami."
+    },
     onError: (error) => {
       console.error("Chat error:", error);
     },
@@ -69,9 +74,9 @@ export default function Chat() {
   return (
     <div className="flex flex-col w-full max-w-2xl mx-auto">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold mb-2">🤖 AI Chat</h2>
+        <h2 className="text-2xl font-bold mb-2">🤖 AI Agronomist</h2>
         <p className="text-gray-600 dark:text-gray-400 text-sm">
-          Powered by OpenAI GPT-4o • Protected by Clerk Authentication
+          Ahli Agronomi Digital • Didukung oleh OpenAI GPT-4o-mini • Dilindungi Otentikasi Clerk
         </p>
       </div>
 
@@ -92,11 +97,11 @@ export default function Chat() {
           <Card className="p-6 text-center border-dashed">
             <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Start a conversation
+              Konsultasi Agronomi
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Ask me anything! I&apos;m here to help with coding, questions, or
-              just chat.
+              Tanyakan tentang pertanian, agronomi, kesehatan tanaman, nutrisi tanaman, 
+              atau praktik pertanian terbaik. Saya siap membantu Anda!
             </p>
           </Card>
         ) : (
@@ -109,7 +114,7 @@ export default function Chat() {
                   <Bot className="w-4 h-4 text-green-600" />
                 )}
                 <span className="font-semibold text-sm">
-                  {m.role === "user" ? "You" : "AI Assistant"}
+                  {m.role === "user" ? "Anda" : "Ahli Agronomi"}
                 </span>
               </div>
               <div className="whitespace-pre-wrap text-sm leading-relaxed pl-6">
@@ -123,7 +128,7 @@ export default function Chat() {
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-2">
               <Bot className="w-4 h-4 text-green-600" />
-              <span className="font-semibold text-sm">AI Assistant</span>
+              <span className="font-semibold text-sm">Ahli Agronomi</span>
             </div>
             <div className="pl-6">
               <div className="flex space-x-1">
