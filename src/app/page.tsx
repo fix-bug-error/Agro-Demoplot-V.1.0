@@ -24,6 +24,7 @@ import {
   CarouselNext,
 } from "@/components/ui/carousel";
 import { toast, Toaster } from "sonner";
+import type { CarouselApi } from "@/components/ui/carousel";
 
 function DashboardButton() {
   const router = useRouter();
@@ -60,7 +61,7 @@ function DashboardButton() {
 }
 
 export default function Home() {
-  const [api, setApi] = useState<any>();
+  const [api, setApi] = useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = useState(0);
   const autoplayTimeout = useRef<NodeJS.Timeout | null>(null);
 

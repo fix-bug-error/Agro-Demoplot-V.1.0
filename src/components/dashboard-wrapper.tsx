@@ -11,7 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 type DashboardWrapperProps = {
   children: ReactNode;
-  plots: any[];
+  plots: Plot[];
   selectedPlot: number | null;
   onPlotSelect: (plotId: number) => void;
 };
