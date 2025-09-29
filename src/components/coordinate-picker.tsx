@@ -106,26 +106,27 @@ export function CoordinatePicker({
               <Marker position={selectedPosition} />
             )}
             <MapClickHandler onCoordinatesChange={handleMapClick} />
-          <div className="absolute bottom-4 left-4 z-[1000]">
-            <Button 
-              type="button" 
-              variant="outline"
-              onClick={() => {
-                if (mapRef.current) {
-                  mapRef.current.locate().on('locationfound', function(e) {
-                    setSelectedPosition([e.latlng.lat, e.latlng.lng]);
-                    onCoordinatesChange(e.latlng.lat, e.latlng.lng);
-                    mapRef.current?.setView(e.latlng, 16);
-                  }).on('locationerror', function(e) {
-                    console.error("Location error:", e.message);
-                  });
-                }
-              }}
-            >
-              Gunakan Lokasi Saat Ini
-            </Button>
-          </div>
-        </MapContainer>
+          </MapContainer>
+        </div>
+        <div className="px-4">
+          <Button 
+            type="button" 
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              if (mapRef.current) {
+                mapRef.current.locate().on('locationfound', function(e) {
+                  setSelectedPosition([e.latlng.lat, e.latlng.lng]);
+                  onCoordinatesChange(e.latlng.lat, e.latlng.lng);
+                  mapRef.current?.setView(e.latlng, 16);
+                }).on('locationerror', function(e) {
+                  console.error("Location error:", e.message);
+                });
+              }
+            }}
+          >
+            Gunakan Lokasi Saat Ini
+          </Button>
         </div>
         
         <DrawerFooter className="grid grid-cols-2 gap-2">
