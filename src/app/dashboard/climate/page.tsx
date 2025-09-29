@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Thermometer, 
   Droplets, 
@@ -25,6 +26,20 @@ import {
   ResponsiveContainer 
 } from "recharts";
 import { DashboardWrapper } from "@/components/dashboard-wrapper";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 // Mock data types
 type ClimateData = {
@@ -55,6 +70,8 @@ export default function ClimatePage() {
   const [error, setError] = useState<string | null>(null);
   const [plots, setPlots] = useState<Plot[]>([]);
   const [climateData, setClimateData] = useState<ClimateData[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10; // Show 10 items per page
 
   // Fetch data on component mount
   useEffect(() => {
@@ -135,6 +152,12 @@ export default function ClimatePage() {
   
   const timeRangeLimitedData = getLimitedDataByTimeRange(filteredData, timeRange);
   
+  // Calculate pagination data
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentData = timeRangeLimitedData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(timeRangeLimitedData.length / itemsPerPage);
+  
   // Calculate average values for the selected time range
   const calculateAverages = (data: ClimateData[]) => {
     if (data.length === 0) {
@@ -177,8 +200,44 @@ export default function ClimatePage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p>Memuat data iklim...</p>
+      <div className="space-y-6 w-full max-w-full overflow-x-hidden">
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <Skeleton className="h-8 w-1/4" />
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <div className="flex rounded-md overflow-hidden border w-full md:w-auto">
+              <Skeleton className="h-9 flex-1" />
+              <Skeleton className="h-9 flex-1" />
+              <Skeleton className="h-9 flex-1" />
+            </div>
+          </div>
+        </div>
+        
+        {/* Summary cards skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+        </div>
+        
+        {/* Charts skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-80 w-full rounded-xl" />
+          <Skeleton className="h-80 w-full rounded-xl" />
+          <Skeleton className="h-80 w-full rounded-xl" />
+          <Skeleton className="h-80 w-full rounded-xl" />
+        </div>
+        
+        {/* Data table skeleton */}
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-1/3" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -200,7 +259,10 @@ export default function ClimatePage() {
     <DashboardWrapper 
       plots={plots} 
       selectedPlot={selectedPlot} 
-      onPlotSelect={setSelectedPlot}
+      onPlotSelect={(plotId) => {
+        setSelectedPlot(plotId);
+        setCurrentPage(1); // Reset to first page when changing plot
+      }}
     >
       <div className="space-y-6 w-full max-w-full overflow-x-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -211,7 +273,10 @@ export default function ClimatePage() {
                 variant={timeRange === "week" ? "default" : "outline"}
                 size="sm"
                 className="rounded-none border-0 flex-1"
-                onClick={() => setTimeRange("week")}
+                onClick={() => {
+                  setTimeRange("week");
+                  setCurrentPage(1); // Reset to first page when changing time range
+                }}
               >
                 Minggu
               </Button>
@@ -219,7 +284,10 @@ export default function ClimatePage() {
                 variant={timeRange === "month" ? "default" : "outline"}
                 size="sm"
                 className="rounded-none border-0 border-l flex-1"
-                onClick={() => setTimeRange("month")}
+                onClick={() => {
+                  setTimeRange("month");
+                  setCurrentPage(1); // Reset to first page when changing time range
+                }}
               >
                 Bulan
               </Button>
@@ -227,7 +295,10 @@ export default function ClimatePage() {
                 variant={timeRange === "year" ? "default" : "outline"}
                 size="sm"
                 className="rounded-none border-0 border-l flex-1"
-                onClick={() => setTimeRange("year")}
+                onClick={() => {
+                  setTimeRange("year");
+                  setCurrentPage(1); // Reset to first page when changing time range
+                }}
               >
                 Tahun
               </Button>
@@ -538,7 +609,7 @@ export default function ClimatePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {timeRangeLimitedData.map((data) => (
+                    {currentData.map((data) => (
                       <tr key={data.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td className="px-2 py-1 whitespace-nowrap text-xs">{new Date(data.date).toLocaleDateString('id-ID')}</td>
                         <td className="px-2 py-1 whitespace-nowrap text-xs">{data.temperature_celsius}</td>
@@ -551,8 +622,101 @@ export default function ClimatePage() {
                 </table>
               </div>
             </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Menampilkan {indexOfFirstItem + 1} - {Math.min(indexOfLastItem, timeRangeLimitedData.length)} dari {timeRangeLimitedData.length} data
+                </div>
+                
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage > 1) {
+                            setCurrentPage(currentPage - 1);
+                          }
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, index) => {
+                      const pageNumber = index + 1;
+                      
+                      // Show first page, last page, current page, and neighbors
+                      if (
+                        pageNumber === 1 || 
+                        pageNumber === totalPages || 
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                      ) {
+                        return (
+                          <PaginationItem key={pageNumber}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(pageNumber);
+                              }}
+                              isActive={pageNumber === currentPage}
+                            >
+                              {pageNumber}
+                            </PaginationLink>
+                          </PaginationItem>
+                        );
+                      } else if (
+                        pageNumber === currentPage - 2 || 
+                        pageNumber === currentPage + 2
+                      ) {
+                        // Show ellipsis for skipped pages
+                        return (
+                          <PaginationItem key={pageNumber}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
+                      return null;
+                    })}
+                    
+                    <PaginationItem>
+                      <PaginationNext 
+                        href="#" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage < totalPages) {
+                            setCurrentPage(currentPage + 1);
+                          }
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </CardContent>
         </Card>
+        
+        <div className="text-center text-sm text-muted-foreground mt-4">
+          Sumber Data: 
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <span className="font-medium text-foreground hover:underline cursor-pointer ml-1">Open-Meteo</span>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-64">
+              <img 
+                src="/open-meteo.png" 
+                alt="Open-Meteo Logo" 
+                className="w-full h-auto"
+              />
+            </HoverCardContent>
+          </HoverCard>
+          <span className="ml-1">| Free Weather API</span>
+        </div>
       </div>
     </DashboardWrapper>
   );

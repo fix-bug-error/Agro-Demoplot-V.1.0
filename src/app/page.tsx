@@ -2,13 +2,28 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin, MapPinned, Users, Thermometer, ThermometerSun, Bug, Brain, BarChart3, CloudSunRain, Coffee, LogIn } from "lucide-react";
+import { ArrowRight, MapPin, MapPinned, Users, Thermometer, ThermometerSun, Bug, Brain, BarChart3, CloudSunRain, Coffee, LogIn, Mail, Copy } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { SimpleThemeToggle } from "@/components/theme-toggle";
 import { motion } from "framer-motion";
 import { BackToTopButton } from "@/components/back-to-top-button";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
+import { toast, Toaster } from "sonner";
 
 function DashboardButton() {
   const router = useRouter();
@@ -45,10 +60,86 @@ function DashboardButton() {
 }
 
 export default function Home() {
+  const [api, setApi] = useState<any>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const autoplayTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // AutoPlay function for mobile carousel
+  useEffect(() => {
+    if (!api || window.innerWidth >= 768) return; // Only run on mobile
+
+    const autoplay = () => {
+      if (api) {
+        api.scrollNext();
+      }
+    };
+
+    // Clear timeout if it exists
+    if (autoplayTimeout.current) {
+      clearTimeout(autoplayTimeout.current);
+    }
+
+    // Set new timeout
+    autoplayTimeout.current = setTimeout(autoplay, 1000);
+
+    // Cleanup function
+    return () => {
+      if (autoplayTimeout.current) {
+        clearTimeout(autoplayTimeout.current);
+      }
+    };
+  }, [api, currentSlide]);
+
+  // Update current slide when API changes
+  useEffect(() => {
+    if (!api) return;
+
+    const onSelect = () => {
+      setCurrentSlide(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    onSelect(); // Set initial slide
+
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
-      <header className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
+      <header className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6 z-50 flex justify-between">
+        <div className="flex items-center gap-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Mail className="h-[1.2rem] w-[1.2rem]" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Hubungi Kami</DialogTitle>
+              </DialogHeader>
+              <div className="py-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-lg font-medium">admin@agrodemoplot.id</p>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => {
+                      navigator.clipboard.writeText('admin@agrodemoplot.id');
+                      toast.success('Email berhasil disalin!');
+                    }}
+                    className="h-8 w-8"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <SimpleThemeToggle aria-label="Toggle theme" />
           <SignedOut>
@@ -93,11 +184,23 @@ export default function Home() {
               </div>
             </div>
           </motion.div>
+          
+          {/* Dashboard Access Button - Positioned inside hero card on mobile */}
+          <motion.div 
+            className="flex md:hidden justify-center mt-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <SignedIn>
+              <DashboardButton />
+            </SignedIn>
+          </motion.div>
         </motion.div>
         
-        {/* Dashboard Access Button - Positioned half inside the card at the bottom */}
+        {/* Dashboard Access Button - Positioned half inside the card at the bottom on larger screens */}
         <motion.div 
-          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -translate-y-[80%] sm:-translate-y-1/2 z-10"
+          className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -translate-y-[80%] sm:-translate-y-1/2 z-10 hidden md:flex"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
@@ -112,7 +215,7 @@ export default function Home() {
 
       {/* Features Section */}
       <motion.section 
-        className="py-16 sm:py-24 px-4"
+        className="py-4 sm:py-24 px-4"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
@@ -120,7 +223,7 @@ export default function Home() {
       >
         <div className="max-w-6xl mx-auto">
           <motion.div 
-            className="text-center mb-12 sm:mb-16"
+            className="text-center mb-6 sm:mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -253,22 +356,150 @@ export default function Home() {
         viewport={{ once: true }}
       >
         <div className="container mx-auto px-4">
-          <p>© {new Date().getFullYear()} AgroDemoplot. Hak Cipta Dilindungi.</p>
+          <p>© {new Date().getFullYear()} · AgroDemoplot V.1.0</p>
        
-          <div className="flex items-center justify-center mt-2">
-                <img 
-                  src="/logoRP.svg" 
-                  alt="RUMAHPETAni Logo" 
-                  width="120"
-                  height="120"
-              
-                />
-              </div>
+          <div className="mt-4">
+            {/* Desktop logos - grid layout for larger screens */}
+            <div className="hidden md:grid grid-cols-7 gap-6 items-center justify-items-center max-w-4xl mx-auto">
+              <img 
+                src="/logoRP.svg" 
+                alt="RUMAHPETAni Logo" 
+           
+                height="100"
+              />
+              <img 
+                src="/next.svg" 
+                alt="Next.js Logo" 
+        
+                height="100"
+              />
+              <img 
+                src="/clerk.png" 
+                alt="Clerk Logo" 
+        
+                height="100"
+              />
+              <img 
+                src="/supabase.svg" 
+                alt="Supabase Logo" 
+         
+                height="100"
+              />
+              <img 
+                src="/leaflet.svg" 
+                alt="Leaflet Logo" 
+      
+                height="100"
+              />
+              <img 
+                src="/open-meteo.png" 
+                alt="Open-Meteo Logo" 
+       
+                height="100"
+              />
+              <img 
+                src="/openai.png" 
+                alt="OpenAI Logo" 
+   
+                height="100"
+              />
+            </div>
+            
+            {/* Mobile logos - carousel for smaller screens */}
+            <div className="md:hidden mt-4 w-full overflow-hidden">
+              <Carousel opts={{ align: "center", loop: true }} className="max-w-full mx-auto px-4" setApi={setApi}>
+                <CarouselContent className="pb-4">
+                  <CarouselItem className="basis-full">
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src="/logoRP.svg" 
+                        alt="RUMAHPETAni Logo" 
+                        width="80"
+                        height="80"
+                        className="max-w-[80px] max-h-[80px] object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem className="basis-full">
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src="/nextjs.png" 
+                        alt="Next.js Logo" 
+                        width="80"
+                        height="80"
+                        className="max-w-[80px] max-h-[80px] object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem className="basis-full">
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src="/clerk.png" 
+                        alt="Clerk Logo" 
+                        width="80"
+                        height="80"
+                        className="max-w-[80px] max-h-[80px] object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem className="basis-full">
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src="/supabase.png" 
+                        alt="Supabase Logo" 
+                        width="80"
+                        height="80"
+                        className="max-w-[80px] max-h-[80px] object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem className="basis-full">
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src="/leaflet.svg" 
+                        alt="Leaflet Logo" 
+                        width="80"
+                        height="80"
+                        className="max-w-[80px] max-h-[80px] object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem className="basis-full">
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src="/open-meteo.png" 
+                        alt="Open-Meteo Logo" 
+                        width="80"
+                        height="80"
+                        className="max-w-[80px] max-h-[80px] object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem className="basis-full">
+                    <div className="flex items-center justify-center">
+                      <img 
+                        src="/openai.png" 
+                        alt="OpenAI Logo" 
+                        width="80"
+                        height="80"
+                        className="max-w-[80px] max-h-[80px] object-contain"
+                      />
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+                <CarouselPrevious className="max-md:size-6" />
+                <CarouselNext className="max-md:size-6" />
+              </Carousel>
+            </div>
+          </div>
         </div>
       </motion.footer>
       
       {/* Back to Top Button */}
       <BackToTopButton />
+      
+      {/* Toast Notifications */}
+      <Toaster />
     </div>
   );
 }

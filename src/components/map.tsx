@@ -2,12 +2,19 @@
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-gesture-handling/dist/leaflet-gesture-handling.css";
-import { MapContainer, TileLayer, Marker, Popup, Polygon } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polygon, ZoomControl } from "react-leaflet";
 import type { Map as LeafletMap } from 'leaflet';
 import L from "leaflet";
 import 'leaflet-gesture-handling';
 import styles from '@/app/dashboard/map/map.module.css';
 import { useEffect, useRef, useState } from "react";
+import { Drone } from "lucide-react";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 // Define a type for map with gesture handling
 type ExtendedLeafletMap = LeafletMap & {
@@ -49,6 +56,29 @@ interface GeoJsonMultiPolygon {
 }
 
 type GeoJsonGeometry = GeoJsonPolygon | GeoJsonMultiPolygon;
+
+// Helper function to create a rounded photo icon from farmer's photo
+const createRoundedPhotoIcon = (photoUrl: string | undefined | null) => {
+  // If photo URL is provided, create a circular icon with the photo
+  if (photoUrl) {
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `<div class="leaflet-marker-photo" style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);background:#3b82f6;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:14px;"><img src="${photoUrl}" alt="Petani" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:14px;\\'>P</div>';" /></div>`,
+      iconSize: [40, 40],
+      iconAnchor: [20, 20], // Center the icon
+      popupAnchor: [0, -20] // Position popup above the marker
+    });
+  }
+  
+  // If no photo URL, create a default circular icon with letter "P"
+  return L.divIcon({
+    className: 'custom-marker',
+    html: '<div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);background:#3b82f6;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:14px;">P</div>',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20], // Center the icon
+    popupAnchor: [0, -20] // Position popup above the marker
+  });
+};
 
 // Helper function to format polygon data for Leaflet
 const formatPolygonForLeaflet = (polygon: PolygonData): [number, number][] => {
@@ -196,6 +226,7 @@ export default function MapComponent({
 }) {
   const mapRef = useRef<L.Map>(null);
   const [basemap, setBasemap] = useState<'osm' | 'google'>('osm');
+  const [isRasterLayerVisible, setIsRasterLayerVisible] = useState(true);
 
   // Initialize gesture handling and fix marker icons on the client side
   useEffect(() => {
@@ -255,7 +286,7 @@ export default function MapComponent({
   useEffect(() => {
     if (mapRef.current && plot) {
       const map = mapRef.current;
-      map.setView([plot.latitude, plot.longitude], 15);
+      map.setView([plot.latitude, plot.longitude], 18);
     }
   }, [plot]);
 
@@ -278,6 +309,10 @@ export default function MapComponent({
     setBasemap(prev => prev === 'osm' ? 'google' : 'osm');
   };
 
+  const toggleRasterLayer = () => {
+    setIsRasterLayerVisible(prev => !prev);
+  };
+
   // Setup map after it's ready
   const handleMapReady = (map: L.Map) => {
     // Store map reference
@@ -285,7 +320,7 @@ export default function MapComponent({
     
     // Set initial view
     if (plot && plot.latitude && plot.longitude) {
-      map.setView([plot.latitude, plot.longitude], 15);
+      map.setView([plot.latitude, plot.longitude], 18);
     } else {
       // Set a default view if no plot is provided
       map.setView([0, 0], 2);
@@ -308,17 +343,14 @@ export default function MapComponent({
       }
     }, 500);
     
-    // Re-enable default zoom controls
-    if (map.zoomControl) {
-      map.zoomControl.setPosition('topright');
-    }
-  };
+    };
 
   return (
     <div className="relative w-full h-full">
       <MapContainer 
         center={plot && plot.latitude && plot.longitude ? [plot.latitude, plot.longitude] : [0, 0]}
-        zoom={plot ? 15 : 2}
+        zoom={plot ? 18 : 2}
+        maxZoom={23}
         className={styles.mapContainer}
         ref={mapRef}
         whenReady={() => {
@@ -328,16 +360,31 @@ export default function MapComponent({
         }}
         // Add gesture handling options directly to the MapContainer
         gestureHandling={true}
+        zoomControl={false} // Disable default zoom control to manually manage it
       >
+          {/* Raster Layer - Display if raster_layer URL is available and visibility is enabled */}
+          {plot && plot.raster_layer && isRasterLayerVisible && (
+            <TileLayer
+              url={plot.raster_layer}
+              attribution='&copy; Data Raster'
+              zIndex={1000}
+              maxNativeZoom={23}
+              maxZoom={23}
+            />
+          )}
           {basemap === 'osm' ? (
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maxNativeZoom={19}
+              maxZoom={23}
             />
           ) : (
             <TileLayer
               attribution='&copy; Google Maps'
               url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
+              maxNativeZoom={20}
+              maxZoom={23}
             />
           )}
           {plot && plot.polygon && formatPolygonForLeaflet(plot.polygon).length > 0 && (
@@ -355,7 +402,10 @@ export default function MapComponent({
             </Polygon>
           )}
           {plot && (
-            <Marker position={[plot.latitude, plot.longitude]}>
+            <Marker 
+              position={[plot.latitude, plot.longitude]}
+              icon={createRoundedPhotoIcon(farmer?.photo_url)}
+            >
               <Popup>
                 <b>{plot.plot_name}</b><br />
                 {farmer ? farmer.full_name : "Petani tidak ditemukan"}<br />
@@ -363,7 +413,26 @@ export default function MapComponent({
               </Popup>
             </Marker>
           )}
+          <ZoomControl position="bottomleft" />
         </MapContainer>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={toggleRasterLayer}
+            className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-md transition-colors border ${
+              isRasterLayerVisible 
+                ? 'border-gray-600 bg-gray-700 text-gray-200 dark:bg-blue-200 dark:text-blue-800 dark:border-blue-500' 
+                : 'border-blue-500 bg-blue-200 text-blue-800 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200'
+            }`}
+            aria-label={`Raster Layer ${isRasterLayerVisible ? 'Nonaktif' : 'Aktif'}`}
+          >
+            <Drone className="h-4 w-4 text-inherit" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Drone View</p>
+        </TooltipContent>
+      </Tooltip>
       <button
         onClick={toggleBasemap}
         className="absolute top-2 right-2 z-20 bg-white dark:bg-gray-800 px-3 py-1 rounded shadow-md text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200"
@@ -371,6 +440,7 @@ export default function MapComponent({
       >
         {basemap === 'osm' ? 'Satelit' : 'OSM'}
       </button>
-    </div>
-  );
+  
+</div>
+);
 }

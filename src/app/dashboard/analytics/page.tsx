@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   BarChart, 
   Bar, 
@@ -26,7 +27,8 @@ import {
   Users,
   User,
   LandPlot,
-  Calendar
+  Calendar,
+  Cherry
 } from "lucide-react";
 
 // Define types for our data
@@ -39,10 +41,12 @@ type AnalyticsData = {
   pestByType: { name: string; value: number }[];
   farmersByGroup: { group: string; count: number }[];
   activityData: { month: string; monitoring: number; recommendations: number }[];
+  productivityData: { plot_name: string; productivity: number; year: number }[];
 };
 
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("year");
+  // Note: Keeping timeRange state as it may be used in data processing or could be needed for future implementation
+  const [timeRange] = useState<"month" | "quarter" | "year">("year"); // Default but not used in UI anymore
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -75,8 +79,27 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p>Memuat data analitik...</p>
+      <div className="space-y-6">
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <Skeleton className="h-8 w-1/4" />
+        </div>
+        
+        {/* Summary cards skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+        </div>
+        
+        {/* Charts skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-96 w-full rounded-xl" />
+          <Skeleton className="h-96 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -124,32 +147,6 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">Analitik</h1>
-        <div className="flex rounded-md overflow-hidden border">
-          <Button 
-            variant={timeRange === "month" ? "default" : "outline"}
-            size="sm"
-            className="rounded-none border-0"
-            onClick={() => setTimeRange("month")}
-          >
-            Bulan
-          </Button>
-          <Button 
-            variant={timeRange === "quarter" ? "default" : "outline"}
-            size="sm"
-            className="rounded-none border-0 border-l"
-            onClick={() => setTimeRange("quarter")}
-          >
-            Kuartal
-          </Button>
-          <Button 
-            variant={timeRange === "year" ? "default" : "outline"}
-            size="sm"
-            className="rounded-none border-0 border-l"
-            onClick={() => setTimeRange("year")}
-          >
-            Tahun
-          </Button>
-        </div>
       </div>
 
       {/* Summary Cards */}
@@ -252,12 +249,11 @@ export default function AnalyticsPage() {
                     dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
                   />
-                </LineChart>
-              </ResponsiveContainer>
+                  </LineChart>
+               </ResponsiveContainer>
             </div>
           </CardContent>
-        </Card>
-
+        </Card>        
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -280,7 +276,47 @@ export default function AnalyticsPage() {
             </div>
           </CardContent>
         </Card>
-
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Cherry className="h-5 w-5" />
+              Tren Hasil Produksi Kopi
+            </CardTitle>
+          </CardHeader>
+            {/* Tren Hasil Produksi Kopi Card - Full width on desktop */}
+          <CardContent>
+            {analyticsData && analyticsData.productivityData && analyticsData.productivityData.length > 0 ? (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={analyticsData.productivityData.map(item => ({
+                    name: item.plot_name,
+                    productivity: item.productivity,
+                    year: item.year
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="productivity" 
+                      name="Produktivitas (kg)" 
+                      stroke="#84cc16" 
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="h-80 flex justify-center items-center">
+                <p className="text-muted-foreground">Data produksi belum tersedia</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

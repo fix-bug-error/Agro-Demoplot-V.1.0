@@ -37,7 +37,7 @@ const navItems = [
     icon: Users,
   },
    {
-    title: "Informasi Kebun",
+    title: "Informasi Lahan",
     href: "/dashboard/map",
     icon: MapPinned,
   },
@@ -126,13 +126,7 @@ export function Sidebar() {
                 </Link>
               );
             })}
-            <div className="p-4 border-t">
-              <img 
-                src="/logoRP.svg" 
-                alt="RUMAHPETAni Logo" 
-                className="h-6 w-auto"
-              />
-            </div>
+            
           </div>
         </div>
       </div>
@@ -195,13 +189,7 @@ export function MobileSidebar() {
                 </Link>
               );
             })}
-            <div className="p-4 border-t">
-              <img 
-                src="/logoRP.svg" 
-                alt="RUMAHPETAni Logo" 
-                className="h-6 w-auto"
-              />
-            </div>
+            
           </div>
         </div>
       </div>

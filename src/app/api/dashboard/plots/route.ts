@@ -21,7 +21,8 @@ export async function GET() {
       .from('plots')
       .select(`
         *,
-        polygon
+        polygon,
+        raster_layer
       `)
       .order('plot_name', { ascending: true });
     

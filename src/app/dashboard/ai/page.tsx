@@ -16,6 +16,11 @@ import remarkGfm from "remark-gfm";
 
 import { DashboardWrapper } from "@/components/dashboard-wrapper";
 import type { Plot } from "@/types";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 // Mock data types
 type Recommendation = {
@@ -248,6 +253,22 @@ export default function AIRecommendationsPage() {
               </div>
             </CardContent>
           </Card>
+          
+          <div className="text-center text-sm text-muted-foreground mt-4">
+            Didukung oleh: 
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <span className="font-medium text-foreground hover:underline cursor-pointer ml-1">OpenAI</span>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-64">
+                <img 
+                  src="/openai.png" 
+                  alt="OpenAI Logo" 
+                  className="w-full h-auto"
+                />
+              </HoverCardContent>
+            </HoverCard>
+          </div>
         </div>
       </div>
     </div>

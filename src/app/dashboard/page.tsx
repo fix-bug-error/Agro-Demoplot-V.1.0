@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Leaf, 
   Thermometer,
@@ -24,7 +26,8 @@ import {
   AlertTriangle,
   Sprout,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Zap
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { MobileSidebar } from "@/components/layout/sidebar";
@@ -64,6 +67,80 @@ export default function DashboardPage() {
   const [showPestPopup, setShowPestPopup] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<Recommendation | null>(null);
   const [showRecommendationPopup, setShowRecommendationPopup] = useState(false);
+
+  // Helper function to get status color and text for pest monitoring
+  const getPestStatusIndicator = (status: string) => {
+    // Handle empty/null/undefined status
+    if (!status) {
+      return {
+        bgColor: "bg-white border border-gray-200",
+        textColor: "text-gray-800",
+        tooltip: null // No tooltip for empty status
+      };
+    }
+    
+    switch (status.toLowerCase()) {
+      case "tidak parah":
+        return {
+          bgColor: "bg-yellow-100",
+          textColor: "text-yellow-800",
+          tooltip: "Tidak Parah"
+        };
+      case "sedang":
+        return {
+          bgColor: "bg-green-100",
+          textColor: "text-green-800",
+          tooltip: "Sedang"
+        };
+      case "parah":
+        return {
+          bgColor: "bg-orange-100",
+          textColor: "text-orange-800",
+          tooltip: "Parah"
+        };
+      case "sangat parah":
+        return {
+          bgColor: "bg-red-100",
+          textColor: "text-red-800",
+          tooltip: "Sangat Parah"
+        };
+      default:
+        // For unknown status, use white background
+        return {
+          bgColor: "bg-white border border-gray-200",
+          textColor: "text-gray-800",
+          tooltip: null // No tooltip for unknown status
+        };
+    }
+  };
+
+    // Component for displaying pest status with Zap icon and tooltip
+  const PestStatusIndicator = ({ status }: { status: string }) => {
+    const statusInfo = getPestStatusIndicator(status);
+    
+    // Only show tooltip if there's a valid status with tooltip text
+    if (statusInfo.tooltip) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`p-1 rounded-full ${statusInfo.bgColor}`}>
+              <Zap className={`h-4 w-4 ${statusInfo.textColor}`} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{statusInfo.tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
+    } else {
+      // For empty or unknown status, show zap icon with white background and no tooltip
+      return (
+        <div className={`p-1 rounded-full ${statusInfo.bgColor}`}>
+          <Zap className={`h-4 w-4 ${statusInfo.textColor}`} />
+        </div>
+      );
+    }
+  };
 
   // Get current farmer based on selected plot
   const getCurrentFarmer = () => {
@@ -128,13 +205,22 @@ export default function DashboardPage() {
         }
         
         // Parse JSON responses
-        const [plotsData, farmersData, climateData, pestData, recommendationsData] = await Promise.all([
+        const [plotsResData, farmersResData, climateResData, pestResData, recommendationsResData] = await Promise.all([
           plotsRes.json(),
           farmersRes.json(),
           climateRes.json(),
           pestRes.json(),
           recommendationsRes.json()
         ]);
+        
+        // Handle different response formats
+        // plots, climate, pests, and recommendations APIs return raw arrays
+        // farmers API returns { success: boolean, data: [] }
+        const plotsData = Array.isArray(plotsResData) ? plotsResData : (plotsResData.data || []);
+        const farmersData = Array.isArray(farmersResData) ? farmersResData : (farmersResData.data || []);
+        const climateData = Array.isArray(climateResData) ? climateResData : (climateResData.data || []);
+        const pestData = Array.isArray(pestResData) ? pestResData : (pestResData.data || []);
+        const recommendationsData = Array.isArray(recommendationsResData) ? recommendationsResData : (recommendationsResData.data || []);
         
         setPlots(plotsData);
         setFarmers(farmersData);
@@ -159,8 +245,45 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <p>Loading dashboard data...</p>
+      <div className="p-4 md:p-6">
+        <div className="space-y-6">
+          {/* Farmer Data Card Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-1/4" />
+            <div className="grid grid-cols-1 gap-4">
+              <Skeleton className="h-32 w-full rounded-xl" />
+            </div>
+          </div>
+
+          {/* Map Card Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-80 w-full rounded-xl" />
+          </div>
+
+          {/* Climate Data Card Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-1/4" />
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </div>
+          </div>
+
+          {/* Pest Monitoring Card Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-48 w-full rounded-xl" />
+          </div>
+
+          {/* AI Recommendation Card Skeleton */}
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -184,14 +307,50 @@ export default function DashboardPage() {
       selectedPlot={selectedPlot} 
       onPlotSelect={setSelectedPlot}
     >
-      <div className="flex min-h-screen bg-background">
+      <TooltipProvider>
+        <div className="flex min-h-screen bg-background">
         {/* Main content */}
         <div className="flex flex-1 flex-col">
           {/* Main content */}
           <main className="flex-1 overflow-auto p-4 md:p-6">
             {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <p>Loading dashboard data...</p>
+              <div className="space-y-6">
+                {/* Farmer Data Card Skeleton */}
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-1/4" />
+                  <div className="grid grid-cols-1 gap-4">
+                    <Skeleton className="h-32 w-full rounded-xl" />
+                  </div>
+                </div>
+
+                {/* Map Card Skeleton */}
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-1/4" />
+                  <Skeleton className="h-80 w-full rounded-xl" />
+                </div>
+
+                {/* Climate Data Card Skeleton */}
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-1/4" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                    <Skeleton className="h-24 w-full rounded-xl" />
+                  </div>
+                </div>
+
+                {/* Pest Monitoring Card Skeleton */}
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-1/4" />
+                  <Skeleton className="h-48 w-full rounded-xl" />
+                </div>
+
+                {/* AI Recommendation Card Skeleton */}
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-1/4" />
+                  <Skeleton className="h-24 w-full rounded-xl" />
+                </div>
               </div>
             ) : error ? (
               <div className="flex justify-center items-center h-64">
@@ -235,11 +394,11 @@ export default function DashboardPage() {
                           
                           <div className="space-y-2 text-sm">
                             <div className="grid grid-cols-4 gap-2">
-                              <span className="text-muted-foreground col-span-1">Phone:</span>
+                              <span className="text-muted-foreground col-span-1">No. Telp:</span>
                               <span className="col-span-3 text-right">{currentFarmer.phone_number}</span>
                             </div>
                             <div className="grid grid-cols-4 gap-2">
-                              <span className="text-muted-foreground col-span-1">Address:</span>
+                              <span className="text-muted-foreground col-span-1">Alamat:</span>
                               <span className="col-span-3 text-right">{currentFarmer.address}</span>
                             </div>
                             <div className="grid grid-cols-4 gap-2">
@@ -273,42 +432,7 @@ export default function DashboardPage() {
                           <p>Select a plot to view map</p>
                         )}
                       </div>
-                      <Button 
-                        className="w-full mt-4" 
-                        variant="outline" 
-                        onClick={() => setShowAerialImage(true)}
-                      >
-                        <Image className="w-4 h-4 mr-2" />
-                        Tampilkan Foto Udara
-                      </Button>
-
-                      {/* Aerial Image Popup */}
-                      {showAerialImage && selectedPlot && (
-                        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[10000] p-4">
-                          <div className="relative max-w-4xl max-h-full w-full h-full flex items-center justify-center">
-                            <button 
-                              className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 z-10"
-                              onClick={() => setShowAerialImage(false)}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                            {plots.find(p => p.id === selectedPlot)?.map_image_url ? (
-                              <img 
-                                src={plots.find(p => p.id === selectedPlot)?.map_image_url || ''} 
-                                alt="Foto Udara" 
-                                className="max-w-full max-h-full object-contain"
-                              />
-                            ) : (
-                              <div className="bg-gray-100 rounded-lg p-8 flex flex-col items-center justify-center min-h-[300px] min-w-[300px]">
-                                <ImageOff className="h-16 w-16 text-gray-400 mb-4" />
-                                <p className="text-gray-500 text-center">Foto udara belum tersedia</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      
                     </CardContent>
                   </Card>
                 </div>
@@ -407,7 +531,6 @@ export default function DashboardPage() {
                               pest.threat_type.toLowerCase().includes('hama')
                             ).length > 0 && (
                               <div>
-                                <h5 className="font-medium text-sm mb-2 text-muted-foreground">Hama</h5>
                                 {currentPestMonitoring
                                   .filter(pest => 
                                     pest.threat_type.toLowerCase().includes('hama')
@@ -418,20 +541,20 @@ export default function DashboardPage() {
                                       key={pest.id} 
                                       className="flex items-start gap-3 p-3 border rounded-lg mb-2 cursor-pointer hover:bg-muted transition-colors"
                                       onClick={() => handlePestClick(pest)}>
-                                      <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
-                                        <Bug className="h-6 w-6 text-muted-foreground" />
-                                      </div>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
+                                            <Bug className="h-6 w-6 text-muted-foreground" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Hama</p>
+                                        </TooltipContent>
+                                      </Tooltip>
                                       <div className="flex-1">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                           <h4 className="font-medium">{pest.threat_name}</h4>
-                                          <span className={`px-2 py-1 rounded-full text-xs ${
-                                            pest.status === "tidak parah" ? "bg-green-100 text-green-800" :
-                                            pest.status === "sedang" ? "bg-yellow-100 text-yellow-800" :
-                                            pest.status === "parah" ? "bg-orange-100 text-orange-800" :
-                                            "bg-red-100 text-red-800"
-                                          }`}>
-                                            {pest.status}
-                                          </span>
+                                          <PestStatusIndicator status={pest.status} />
                                         </div>
                                         <p className="text-sm text-muted-foreground">{pest.scientific_name}</p>
                                       </div>
@@ -448,7 +571,6 @@ export default function DashboardPage() {
                               pest.threat_type.toLowerCase().includes('hama')
                             ).length > 0 && (
                               <div>
-                                <h5 className="font-medium text-sm mb-2 text-muted-foreground">Hama</h5>
                                 {currentPestMonitoring
                                   .filter(pest => 
                                     pest.threat_type.toLowerCase().includes('hama')
@@ -458,20 +580,20 @@ export default function DashboardPage() {
                                       key={pest.id} 
                                       className="flex items-start gap-3 p-3 border rounded-lg mb-2 cursor-pointer hover:bg-muted transition-colors"
                                       onClick={() => handlePestClick(pest)}>
-                                      <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
-                                        <Bug className="h-6 w-6 text-muted-foreground" />
-                                      </div>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
+                                            <Bug className="h-6 w-6 text-muted-foreground" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Hama</p>
+                                        </TooltipContent>
+                                      </Tooltip>
                                       <div className="flex-1">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                           <h4 className="font-medium">{pest.threat_name}</h4>
-                                          <span className={`px-2 py-1 rounded-full text-xs ${
-                                            pest.status === "tidak parah" ? "bg-green-100 text-green-800" :
-                                            pest.status === "sedang" ? "bg-yellow-100 text-yellow-800" :
-                                            pest.status === "parah" ? "bg-orange-100 text-orange-800" :
-                                            "bg-red-100 text-red-800"
-                                          }`}>
-                                            {pest.status}
-                                          </span>
+                                          <PestStatusIndicator status={pest.status} />
                                         </div>
                                         <p className="text-sm text-muted-foreground">{pest.scientific_name}</p>
                                       </div>
@@ -485,7 +607,6 @@ export default function DashboardPage() {
                               pest.threat_type.toLowerCase().includes('penyakit')
                             ).length > 0 && (
                               <div>
-                                <h5 className="font-medium text-sm mb-2 text-muted-foreground">Penyakit</h5>
                                 {currentPestMonitoring
                                   .filter(pest => 
                                     pest.threat_type.toLowerCase().includes('penyakit')
@@ -495,20 +616,20 @@ export default function DashboardPage() {
                                       key={pest.id} 
                                       className="flex items-start gap-3 p-3 border rounded-lg mb-2 cursor-pointer hover:bg-muted transition-colors"
                                       onClick={() => handlePestClick(pest)}>
-                                      <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
-                                        <AlertTriangle className="h-6 w-6 text-muted-foreground" />
-                                      </div>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
+                                            <AlertTriangle className="h-6 w-6 text-muted-foreground" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Penyakit</p>
+                                        </TooltipContent>
+                                      </Tooltip>
                                       <div className="flex-1">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                           <h4 className="font-medium">{pest.threat_name}</h4>
-                                          <span className={`px-2 py-1 rounded-full text-xs ${
-                                            pest.status === "tidak parah" ? "bg-green-100 text-green-800" :
-                                            pest.status === "sedang" ? "bg-yellow-100 text-yellow-800" :
-                                            pest.status === "parah" ? "bg-orange-100 text-orange-800" :
-                                            "bg-red-100 text-red-800"
-                                          }`}>
-                                            {pest.status}
-                                          </span>
+                                          <PestStatusIndicator status={pest.status} />
                                         </div>
                                         <p className="text-sm text-muted-foreground">{pest.scientific_name}</p>
                                       </div>
@@ -522,7 +643,6 @@ export default function DashboardPage() {
                               pest.threat_type.toLowerCase().includes('gulma')
                             ).length > 0 && (
                               <div>
-                                <h5 className="font-medium text-sm mb-2 text-muted-foreground">Gulma</h5>
                                 {currentPestMonitoring
                                   .filter(pest => 
                                     pest.threat_type.toLowerCase().includes('gulma')
@@ -532,20 +652,20 @@ export default function DashboardPage() {
                                       key={pest.id} 
                                       className="flex items-start gap-3 p-3 border rounded-lg mb-2 cursor-pointer hover:bg-muted transition-colors"
                                       onClick={() => handlePestClick(pest)}>
-                                      <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
-                                        <Sprout className="h-6 w-6 text-muted-foreground" />
-                                      </div>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="bg-gray-200 border-2 border-dashed rounded-xl w-12 h-12 flex items-center justify-center">
+                                            <Sprout className="h-6 w-6 text-muted-foreground" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Gulma</p>
+                                        </TooltipContent>
+                                      </Tooltip>
                                       <div className="flex-1">
-                                        <div className="flex justify-between">
+                                        <div className="flex justify-between items-center">
                                           <h4 className="font-medium">{pest.threat_name}</h4>
-                                          <span className={`px-2 py-1 rounded-full text-xs ${
-                                            pest.status === "tidak parah" ? "bg-green-100 text-green-800" :
-                                            pest.status === "sedang" ? "bg-yellow-100 text-yellow-800" :
-                                            pest.status === "parah" ? "bg-orange-100 text-orange-800" :
-                                            "bg-red-100 text-red-800"
-                                          }`}>
-                                            {pest.status}
-                                          </span>
+                                          <PestStatusIndicator status={pest.status} />
                                         </div>
                                         <p className="text-sm text-muted-foreground">{pest.scientific_name}</p>
                                       </div>
@@ -580,10 +700,12 @@ export default function DashboardPage() {
                             setShowRecommendationPopup(true);
                           }}
                         >
-                          <h4 className="font-medium mb-2">Rekomendasi Mingguan</h4>
-                          <p className="text-xs text-muted-foreground">
-                            {currentRecommendations[0] ? new Date(currentRecommendations[0].recommendation_date).toLocaleDateString() : ''}
-                          </p>
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-medium">Rekomendasi Mingguan</h4>
+                            <p className="text-xs text-muted-foreground">
+                              {currentRecommendations[0] ? new Date(currentRecommendations[0].recommendation_date).toLocaleDateString() : ''}
+                            </p>
+                          </div>
                         </div>
                       ) : (
                         <p>No AI recommendations available</p>
@@ -647,14 +769,10 @@ export default function DashboardPage() {
                           
                           <div>
                             <h4 className="font-semibold text-muted-foreground">Status</h4>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              selectedPest.status === "tidak parah" ? "bg-green-100 text-green-800" :
-                              selectedPest.status === "sedang" ? "bg-yellow-100 text-yellow-800" :
-                              selectedPest.status === "parah" ? "bg-orange-100 text-orange-800" :
-                              "bg-red-100 text-red-800"
-                            }`}>
-                              {selectedPest.status}
-                            </span>
+                            <div className="mt-1 flex items-center gap-2">
+                              <PestStatusIndicator status={selectedPest.status} />
+                              <p>{selectedPest.status}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -710,6 +828,7 @@ export default function DashboardPage() {
           </main>
         </div>
       </div>
+      </TooltipProvider>
     </DashboardWrapper>
   );
 }

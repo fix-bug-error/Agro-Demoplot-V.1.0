@@ -6,18 +6,21 @@ import { PlotSelector } from "@/components/plot-selector";
 import { MobilePlotSelector } from "@/components/mobile-plot-selector";
 import type { Plot } from "@/types";
 
-interface DashboardWrapperProps {
-  plots: Plot[];
+import { ReactNode } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
+type DashboardWrapperProps = {
+  children: ReactNode;
+  plots: any[];
   selectedPlot: number | null;
   onPlotSelect: (plotId: number) => void;
-  children: React.ReactNode;
-}
+};
 
 export function DashboardWrapper({ 
+  children, 
   plots, 
   selectedPlot, 
-  onPlotSelect, 
-  children 
+  onPlotSelect 
 }: DashboardWrapperProps) {
   const [plotSelectorContainer, setPlotSelectorContainer] = useState<HTMLElement | null>(null);
   const [mobilePlotSelectorContainer, setMobilePlotSelectorContainer] = useState<HTMLElement | null>(null);
@@ -33,26 +36,28 @@ export function DashboardWrapper({
   }, [plots, selectedPlot]);
   
   return (
-    <>
-      {children}
-      {/* Desktop Plot Selector */}
-      {plotSelectorContainer && plots.length > 0 && createPortal(
-        <PlotSelector 
-          plots={plots} 
-          selectedPlot={selectedPlot} 
-          onPlotSelect={onPlotSelect} 
-        />,
-        plotSelectorContainer
-      )}
-      {/* Mobile Plot Selector */}
-      {mobilePlotSelectorContainer && plots.length > 0 && createPortal(
-        <MobilePlotSelector 
-          plots={plots} 
-          selectedPlot={selectedPlot} 
-          onPlotSelect={onPlotSelect} 
-        />,
-        mobilePlotSelectorContainer
-      )}
-    </>
+    <TooltipProvider>
+      <>
+        {children}
+        {/* Desktop Plot Selector */}
+        {plotSelectorContainer && plots.length > 0 && createPortal(
+          <PlotSelector 
+            plots={plots} 
+            selectedPlot={selectedPlot} 
+            onPlotSelect={onPlotSelect} 
+          />,
+          plotSelectorContainer
+        )}
+        {/* Mobile Plot Selector */}
+        {mobilePlotSelectorContainer && plots.length > 0 && createPortal(
+          <MobilePlotSelector 
+            plots={plots} 
+            selectedPlot={selectedPlot} 
+            onPlotSelect={onPlotSelect} 
+          />,
+          mobilePlotSelectorContainer
+        )}
+      </>
+    </TooltipProvider>
   );
 }

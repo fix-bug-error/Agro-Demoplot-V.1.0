@@ -21,17 +21,6 @@ SelectTrigger,
 SelectValue,
 } from "@/components/ui/select";
 import {
-AlertDialog,
-AlertDialogAction,
-AlertDialogCancel,
-AlertDialogContent,
-AlertDialogDescription,
-AlertDialogFooter,
-AlertDialogHeader,
-AlertDialogTitle,
-AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
 User,
 Users,
 Plus,
@@ -129,8 +118,6 @@ export default function FarmerPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addFarmerGender, setAddFarmerGender] = useState<string>("");
   const [addFarmerEducation, setAddFarmerEducation] = useState<string>("");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [farmerToDelete, setFarmerToDelete] = useState<number | null>(null);
   // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -251,29 +238,10 @@ export default function FarmerPage() {
     setFarmerToEdit(farmer);
     setEditDialogOpen(true);
   };
-  const handleDeleteFarmer = async (id: number) => {
-    try {
-      // Call API to delete farmer
-      const response = await fetch(`/api/dashboard/farmers/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (response.ok) {
-        // Update local state after successful API call
-        setFarmers(farmers.filter(farmer => farmer.id !== id));
-        if (selectedFarmer && selectedFarmer.id === id) {
-          setSelectedFarmer(null);
-        }
-        
-        // Show success alert
-        setShowSuccessAlert(true);
-        setTimeout(() => setShowSuccessAlert(false), 3000);
-      } else {
-        throw new Error('Failed to delete farmer');
-      }
-    } catch (error) {
-      console.error('Error deleting farmer:', error);
-      alert('Gagal menghapus data petani. Silakan coba lagi.');
+  const handleDeleteFarmer = (id: number) => {
+    setFarmers(farmers.filter(farmer => farmer.id !== id));
+    if (selectedFarmer && selectedFarmer.id === id) {
+      setSelectedFarmer(null);
     }
   };
   if (loading) {
@@ -487,45 +455,16 @@ export default function FarmerPage() {
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
-                              <AlertDialog open={deleteDialogOpen && farmerToDelete === farmer.id} onOpenChange={(open) => {
-                                if (!open) {
-                                  setDeleteDialogOpen(false);
-                                  setFarmerToDelete(null);
-                                }
-                              }}>
-                                <AlertDialogTrigger asChild>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setFarmerToDelete(farmer.id);
-                                      setDeleteDialogOpen(true);
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Apakah anda yakin?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Tindakan ini tidak dapat dibatalkan. Data petani akan dihapus secara permanen dari sistem.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Batal</AlertDialogCancel>
-                                    <AlertDialogAction onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (farmerToDelete !== null) {
-                                        handleDeleteFarmer(farmerToDelete);
-                                        setDeleteDialogOpen(false);
-                                        setFarmerToDelete(null);
-                                      }
-                                    }}>Lanjutkan</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFarmer(farmer.id);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
                           <p className="text-sm text-muted-foreground">
@@ -649,7 +588,19 @@ export default function FarmerPage() {
                       {selectedFarmer.farmer_group || "-"}
                     </div>
                   </div>
-                  
+                  <div className="pt-4">
+                    <Button 
+                      className="w-full" 
+                      onClick={() => {
+                        if (selectedFarmer) {
+                          setFarmerToEdit(selectedFarmer);
+                          setEditDialogOpen(true);
+                        }
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -1036,85 +987,39 @@ export default function FarmerPage() {
             />
           </div>
           <div className="flex gap-2 pt-4">
-            <Button
-              className="flex-1"
-              onClick={async () => {
-              // Get the form values
-              const fullName = (document.getElementById('add_full_name') as HTMLInputElement)?.value || '';
-              const nationalId = (document.getElementById('add_national_id') as HTMLInputElement)?.value || '';
-              const birthDate = (document.getElementById('add_birth_date') as HTMLInputElement)?.value || '';
-
-
-              // Gunakan state untuk gender dan education
-              const gender = addFarmerGender;
-              const education = addFarmerEducation;
-
-
-              const phone = (document.getElementById('add_phone') as HTMLInputElement)?.value || '';
-              const address = (document.getElementById('add_address') as HTMLInputElement)?.value || '';
-              const group = (document.getElementById('add_group') as HTMLInputElement)?.value || '';
-
-
-              const newFarmer: Farmer = {
-              id: Math.max(...farmers.map(f => f.id), 0) + 1,
-              full_name: fullName,
-              national_id: nationalId,
-              date_of_birth: birthDate,
-              education: education,
-              gender: gender,
-              phone_number: phone,
-              address: address,
-              farmer_group: group,
-              photo_url: currentAvatar || '',
-              profile: `Halo, nama saya ${fullName}. Saya adalah seorang petani yang berdedikasi dalam mengelola lahan kopi.`
-              };
-
-
-              try {
-              const response = await fetch('/api/dashboard/farmers', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(newFarmer),
-              });
-
-
-              if (response.ok) {
-              setFarmers([...farmers, newFarmer]);
-              setAddDialogOpen(false);
-              setCurrentAvatar(null);
-              setAddFarmerGender("");
-              setAddFarmerEducation("");
-              setShowSuccessAlert(true);
-              setTimeout(() => setShowSuccessAlert(false), 3000);
-              } else {
-              throw new Error('Failed to add farmer');
-              }
-              } catch (error) {
-              console.error('Error adding farmer:', error);
-              alert('Gagal menambahkan data petani. Silakan coba lagi.');
-              }
-              }}
-              >
-              Simpan
-              </Button>
             <Button 
-              variant="outline" 
-              onClick={() => {
-                setAddDialogOpen(false);
-                setCurrentAvatar(null); // Reset avatar selection
-                setAddFarmerGender(""); // Reset gender selection
-                setAddFarmerEducation(""); // Reset education selection
-              }}
-            >
-              Batal
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-    </>  );
-}
-
-
-
-
+              className="flex-1" 
+              onClick={async () => {\n                // Get the form values\n                const fullName = (document.getElementById('add_full_name') as HTMLInputElement)?.value || '';\n                const nationalId = (document.getElementById('add_national_id') as HTMLInputElement)?.value || '';\n                const birthDate = (document.getElementById('add_birth_date') as HTMLInputElement)?.value || '';\n                \n                // For gender and education, we'll need to track them separately since Select doesn't have an input value\n                // We'll use a data attribute or state, but for now we'll just get them from the Select components\n                const genderSelect = document.querySelector('[id="add_gender"] .[\\\\:value]') as HTMLElement;\n                let gender = '';\n                if (genderSelect) {\n                  gender = genderSelect.textContent || '';\n                } else {\n                  // Fallback to a hidden input or default value if needed\n                  gender = (document.querySelector('[id="add_gender"] + div input') as HTMLInputElement)?.value || '';\n                }\n                \n                const educationSelect = document.querySelector('[id="add_education"] .[\\\\:value]') as HTMLElement;\n                let education = '';\n                if (educationSelect) {\n                  education = educationSelect.textContent || '';\n                } else {\n                  // Fallback to a hidden input or default value if needed\n                  education = (document.querySelector('[id="add_education"] + div input') as HTMLInputElement)?.value || '';\n                }\n                \n                const phone = (document.getElementById('add_phone') as HTMLInputElement)?.value || '';\n                const address = (document.getElementById('add_address') as HTMLInputElement)?.value || '';\n                const group = (document.getElementById('add_group') as HTMLInputElement)?.value || '';\n
+                
+                // Create new farmer object
+                const newFarmer: Farmer = {
+                  id: Math.max(...farmers.map(f => f.id), 0) + 1, // Simple ID generation
+                  full_name: fullName,
+                  national_id: nationalId,
+                  date_of_birth: birthDate,
+                  education: education,
+                  gender: gender,
+                  phone_number: phone,
+                  address: address,
+                  farmer_group: group,
+                  photo_url: currentAvatar || '', // Use selected avatar or empty string
+                  profile: `Halo, nama saya ${fullName}. Saya adalah seorang petani yang berdedikasi dalam mengelola lahan kopi.`
+                };
+                
+                try {
+                  // Call API to add farmer
+                  const response = await fetch('/api/dashboard/farmers', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(newFarmer),
+                  });
+                  
+                  if (response.ok) {
+                    // Add the new farmer to the local state
+                    const updatedFarmers = [...farmers, newFarmer];
+                    setFarmers(updatedFarmers);
+                    
+                    setAddDialogOpen(false);
+                    

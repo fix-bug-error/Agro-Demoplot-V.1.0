@@ -16,6 +16,7 @@ export type Plot = {
   updated_at?: string;
   polygon?: Record<string, unknown> | unknown[] | string | null;
   productivity?: number;
+  raster_layer?: string;
 };
 
 export type Farmer = {
@@ -48,10 +49,8 @@ export type PestMonitoring = {
   threat_type: string;
   threat_name: string;
   scientific_name: string;
-  observation_date: string;
   status: string;
   description: string;
-  recommended_action: string;
   image_url: string | null;
   detected_at: string;
 };
