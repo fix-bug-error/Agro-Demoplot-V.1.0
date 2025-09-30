@@ -27,8 +27,15 @@ import {
   Sprout,
   ChevronDown,
   ChevronUp,
-  Zap
+  Zap,
+  Microscope
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import dynamic from "next/dynamic";
 import { MobileSidebar } from "@/components/layout/sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -67,6 +74,60 @@ export default function DashboardPage() {
   const [showPestPopup, setShowPestPopup] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<Recommendation | null>(null);
   const [showRecommendationPopup, setShowRecommendationPopup] = useState(false);
+  const [selectedSoilDepth, setSelectedSoilDepth] = useState<string>("0-5cm");
+type SoilPoint = {
+  id: number;
+  plot_id: number;
+  lat: number;
+  lon: number;
+  property: string;
+  depth: string;
+  stat_mean: number | null;
+  q05: number | null;
+  q50: number | null;
+  q95: number | null;
+  uncertainty: number | null;
+  raw: Record<string, unknown>;
+  queried_at: string;
+  updated_at: string;
+  stat_mean_readable: number | null;
+};
+
+  const [soilData, setSoilData] = useState<SoilPoint[]>([]);
+  const [soilDataLoading, setSoilDataLoading] = useState(false);
+
+  // Fetch soil data when selected plot or depth changes
+  useEffect(() => {
+    const fetchSoilData = async () => {
+      if (!selectedPlot) return;
+      
+      setSoilDataLoading(true);
+      try {
+        const url = `/api/dashboard/soil?plotId=${selectedPlot}${selectedSoilDepth ? `&depth=${encodeURIComponent(selectedSoilDepth)}` : ''}`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSoilData(data);
+        } else {
+          console.error('Failed to fetch soil data');
+          setSoilData([]);
+        }
+      } catch (err) {
+        console.error('Error fetching soil data:', err);
+        setSoilData([]);
+      } finally {
+        setSoilDataLoading(false);
+      }
+    };
+
+    fetchSoilData();
+  }, [selectedPlot, selectedSoilDepth]);
 
   // Helper function to get status color and text for pest monitoring
   const getPestStatusIndicator = (status: string) => {
@@ -435,6 +496,38 @@ export default function DashboardPage() {
                       
                     </CardContent>
                   </Card>
+
+                  {/* AI Recommendation Card - shown on desktop below Map, hidden on mobile */}
+                  <Card className="hidden lg:block">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Brain className="h-5 w-5" />
+                        Rekomendasi AI
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {currentRecommendations.length > 0 ? (
+                        <div 
+                          className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                          onClick={() => {
+                            // Show popup with first recommendation
+                            const firstRec = currentRecommendations[0];
+                            setSelectedRecommendation(firstRec);
+                            setShowRecommendationPopup(true);
+                          }}
+                        >
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-medium">Rekomendasi Mingguan</h4>
+                            <p className="text-xs text-muted-foreground">
+                              {currentRecommendations[0] ? new Date(currentRecommendations[0].recommendation_date).toLocaleDateString() : ''}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p>No AI recommendations available</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
 
                 {/* Right Column */}
@@ -506,6 +599,157 @@ export default function DashboardPage() {
                     </CardContent>
                   </Card>
 
+                  
+                  {/* Soil Profile Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Microscope className="h-5 w-5" />
+                        Profil Tanah
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      
+                      {/* Loading State */}
+                      {soilDataLoading && !soilData.length && (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">Memuat data tanah...</p>
+                        </div>
+                      )}
+                      
+                      {/* No Data State */}
+                      {!soilDataLoading && soilData.length === 0 && (
+                        <div className="text-center py-8">
+                          <p className="text-muted-foreground">Tidak ada data tanah tersedia</p>
+                        </div>
+                      )}
+                      
+                      {/* Soil Data Display - Match subpage styling exactly */}
+                      {!soilDataLoading && soilData.length > 0 && (
+                        <div className="space-y-6">
+                          {/* Depth Layer Display */}
+                          <div className="border rounded-lg p-4">
+                            <div className="bg-muted p-3 rounded-md text-sm mb-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                <span>Kedalaman:</span>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      className="flex items-center gap-2 px-3 py-2 h-9 font-normal border-border hover:bg-accent hover:text-accent-foreground w-[160px]"
+                                    >
+                                      <span className="truncate">
+                                        {selectedSoilDepth === "0-5cm" && "0-5 cm"}
+                                        {selectedSoilDepth === "5-15cm" && "5-15 cm"}
+                                        {selectedSoilDepth === "15-30cm" && "15-30 cm"}
+                                      </span>
+                                      <ChevronDown className="h-4 w-4 ml-1" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent 
+                                    align="start" 
+                                    className="w-[var(--radix-dropdown-menu-trigger-width)]"
+                                  >
+                                    <DropdownMenuItem onSelect={() => setSelectedSoilDepth("0-5cm")}>
+                                      0-5 cm
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setSelectedSoilDepth("5-15cm")}>
+                                      5-15 cm
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => setSelectedSoilDepth("15-30cm")}>
+                                      15-30 cm
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {/* Display properties in the same order as subpage */}
+                              {soilData
+                                .filter(item => item.property === 'sand')
+                                .slice(0, 1)
+                                .map(item => (
+                                  <div key={`sand-${item.depth}`} className="flex flex-row lg:flex-col justify-between items-center lg:items-start gap-3 lg:gap-1">
+                                    <h3 className="font-medium text-muted-foreground text-sm">Kandungan Pasir</h3>
+                                    <p className="text-sm font-medium">
+                                      {item.stat_mean_readable !== null ? item.stat_mean_readable : 'N/A'}%
+                                    </p>
+                                  </div>
+                                ))
+                              }
+                              
+                              {soilData
+                                .filter(item => item.property === 'silt')
+                                .slice(0, 1)
+                                .map(item => (
+                                  <div key={`silt-${item.depth}`} className="flex flex-row lg:flex-col justify-between items-center lg:items-start gap-3 lg:gap-1">
+                                    <h3 className="font-medium text-muted-foreground text-sm">Kandungan Debu</h3>
+                                    <p className="text-sm font-medium">
+                                      {item.stat_mean_readable !== null ? item.stat_mean_readable : 'N/A'}%
+                                    </p>
+                                  </div>
+                                ))
+                              }
+                              
+                              {soilData
+                                .filter(item => item.property === 'clay')
+                                .slice(0, 1)
+                                .map(item => (
+                                  <div key={`clay-${item.depth}`} className="flex flex-row lg:flex-col justify-between items-center lg:items-start gap-3 lg:gap-1">
+                                    <h3 className="font-medium text-muted-foreground text-sm">Kandungan Liat</h3>
+                                    <p className="text-sm font-medium">
+                                      {item.stat_mean_readable !== null ? item.stat_mean_readable : 'N/A'}%
+                                    </p>
+                                  </div>
+                                ))
+                              }
+                              
+                              {soilData
+                                .filter(item => item.property === 'phh2o')
+                                .slice(0, 1)
+                                .map(item => (
+                                  <div key={`phh2o-${item.depth}`} className="flex flex-row lg:flex-col justify-between items-center lg:items-start gap-3 lg:gap-1">
+                                    <h3 className="font-medium text-muted-foreground text-sm">pH Tanah</h3>
+                                    <p className="text-sm font-medium">
+                                      {item.stat_mean_readable !== null ? item.stat_mean_readable : 'N/A'}
+                                    </p>
+                                  </div>
+                                ))
+                              }
+                              
+                              {soilData
+                                .filter(item => item.property === 'soc')
+                                .slice(0, 1)
+                                .map(item => (
+                                  <div key={`soc-${item.depth}`} className="flex flex-row lg:flex-col justify-between items-center lg:items-start gap-3 lg:gap-1">
+                                    <h3 className="font-medium text-muted-foreground text-sm">Karbon Organik Tanah</h3>
+                                    <p className="text-sm font-medium">
+                                      {item.stat_mean_readable !== null ? item.stat_mean_readable : 'N/A'} g/kg
+                                    </p>
+                                  </div>
+                                ))
+                              }
+                              
+                              {soilData
+                                .filter(item => item.property === 'bdod')
+                                .slice(0, 1)
+                                .map(item => (
+                                  <div key={`bdod-${item.depth}`} className="flex flex-row lg:flex-col justify-between items-center lg:items-start gap-3 lg:gap-1">
+                                    <h3 className="font-medium text-muted-foreground text-sm">Berat Isi Tanah</h3>
+                                    <p className="text-sm font-medium">
+                                      {item.stat_mean_readable !== null ? item.stat_mean_readable : 'N/A'} kg/m³
+                                    </p>
+                                  </div>
+                                ))
+                              }
+                            </div>
+                          </div>
+                          
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                   {/* Pest Monitoring Card */}
                   <Card>
                     <CardHeader 
@@ -681,8 +925,8 @@ export default function DashboardPage() {
                     </CardContent>
                   </Card>
 
-                  {/* AI Recommendation Card */}
-                  <Card>
+                  {/* AI Recommendation Card - shown on mobile (original position), hidden on desktop */}
+                  <Card className="block lg:hidden">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Brain className="h-5 w-5" />

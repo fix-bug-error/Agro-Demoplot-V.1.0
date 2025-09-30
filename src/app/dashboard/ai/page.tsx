@@ -8,8 +8,9 @@ import {
   RefreshCw,
   Calendar,
   Sprout,
-  Thermometer,
-  Bug
+  ThermometerSun,
+  Bug,
+  Microscope
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -127,7 +128,7 @@ export default function AIRecommendationsPage() {
       return <Bug className="h-5 w-5" />;
     }
     if (title.toLowerCase().includes("siram") || title.toLowerCase().includes("air")) {
-      return <Thermometer className="h-5 w-5" />;
+      return <ThermometerSun className="h-5 w-5" />;
     }
     // Use Brain as default icon instead of Sprout
     return <Brain className="h-5 w-5" />;
@@ -220,20 +221,25 @@ export default function AIRecommendationsPage() {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Rekomendasi AI kami dibuat berdasarkan analisis data iklim, kondisi tanah, 
-                  dan hasil monitoring hama serta penyakit secara real-time.
+                  Rekomendasi AI kami dibuat berdasarkan analisis karakteristik tanah, data klimatologi,  
+                  dan hasil monitoring hama, penyakit dan gulma serta kondisi tanaman.
                 </p>
                 
                 <div className="space-y-3">
                   <h4 className="font-medium">Faktor yang dianalisis:</h4>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <Thermometer className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <span>Data suhu dan kelembapan</span>
+                      <Microscope className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <span>Karakteristik tanah</span>
                     </li>
                     <li className="flex items-start gap-2">
+                      <ThermometerSun className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <span>Data suhu dan kelembapan</span>
+                    </li>
+                    
+                    <li className="flex items-start gap-2">
                       <Bug className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <span>Hasil monitoring hama & penyakit</span>
+                      <span>Hasil monitoring HPG</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Sprout className="h-4 w-4 text-muted-foreground mt-0.5" />

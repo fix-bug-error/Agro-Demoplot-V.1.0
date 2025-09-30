@@ -11,7 +11,8 @@ import {
   Cloud,
   CloudRain,
   Calendar,
-  ThermometerSun
+  ThermometerSun,
+  Database
 } from "lucide-react";
 import { 
   LineChart, 
@@ -701,21 +702,24 @@ export default function ClimatePage() {
           </CardContent>
         </Card>
         
-        <div className="text-center text-sm text-muted-foreground mt-4">
-          Sumber Data: 
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <span className="font-medium text-foreground hover:underline cursor-pointer ml-1">Open-Meteo</span>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-64">
-              <img 
-                src="/open-meteo.png" 
-                alt="Open-Meteo Logo" 
-                className="w-full h-auto"
-              />
-            </HoverCardContent>
-          </HoverCard>
-          <span className="ml-1">| Free Weather API</span>
+        {/* Full-width Sumber Data card */}
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Sumber Data
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Data klimatologi diperoleh dari Open-Meteo - Sistem informasi cuaca digital global 
+                berbasis artificial intelligence dan machine learning. API prakiraan cuaca Open-Meteo 
+                menggunakan model cuaca dari berbagai penyedia cuaca nasional. Untuk setiap lokasi 
+                di seluruh dunia, model terbaik akan digabungkan untuk memberikan prakiraan terbaik.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </DashboardWrapper>

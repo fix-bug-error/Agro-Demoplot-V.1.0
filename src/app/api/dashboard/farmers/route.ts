@@ -66,7 +66,9 @@ export async function GET() {
       return new Response(
         JSON.stringify({
           success: true,
-          data: []
+          data: [],
+          needsOnboarding: true, // Indicate that user needs to complete onboarding
+          message: 'User has not completed onboarding. Please create a farmer profile first.'
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );

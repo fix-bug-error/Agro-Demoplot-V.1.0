@@ -14,7 +14,8 @@ import {
   Brain, 
   BarChart,
   Leaf,
-  Bot
+  Bot,
+  Microscope
 } from "lucide-react";
 
 import {
@@ -41,10 +42,16 @@ const navItems = [
     href: "/dashboard/map",
     icon: MapPinned,
   },
+
   {
     title: "Data Klimatologi",
     href: "/dashboard/climate",
     icon: CloudSunRain,
+  },
+  {
+    title: "Karakteristik Tanah",
+    href: "/dashboard/soil",
+    icon: Microscope,
   },
   {
     title: "Monitoring HPG",

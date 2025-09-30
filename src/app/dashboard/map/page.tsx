@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Cherry, Image, ImageOff, ChevronUp, ChevronDown, Search, Plus } from "lucide-react";
+import { MapPin, Cherry, Image, ImageOff, ChevronUp, ChevronDown, Search, Plus, Maximize2, Minimize2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Tooltip as ShadcnTooltip,
@@ -106,6 +106,26 @@ export default function MapPage() {
   });
   
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false);
+
+  // Function to handle map fullscreen
+  const toggleMapFullscreen = () => {
+    setIsMapFullscreen(!isMapFullscreen);
+  };
+
+  // Effect to handle Escape key press to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isMapFullscreen) {
+        setIsMapFullscreen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isMapFullscreen]);
 
   // Function to handle adding a new plot
   const handleAddPlot = async () => {
@@ -471,25 +491,43 @@ export default function MapPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Peta Interaktif
+          <Card className={isMapFullscreen ? "fixed inset-0 z-50 m-0 rounded-none flex flex-col" : ""}>
+            <CardHeader className={isMapFullscreen ? "flex-shrink-0" : ""}>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  <span>Peta Interaktif</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={toggleMapFullscreen}
+                  className="h-8 w-8 p-0"
+                >
+                  {isMapFullscreen ? (
+                    <Minimize2 className="h-4 w-4" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4" />
+                  )}
+                  <span className="sr-only">{isMapFullscreen ? "Minimize map" : "Maximize map"}</span>
+                </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="h-96 rounded-lg bg-gray-100 border-2 border-dashed flex items-center justify-center relative z-20 overflow-hidden touch-auto">
-                {selectedPlot ? (
-                  <div className="w-full h-full">
-                    <MapComponent 
-                      plot={currentPlot} 
-                      farmer={currentFarmer}
-                    />
-                  </div>
-                ) : (
-                  <p>Pilih plot untuk melihat peta</p>
-                )}
+            <CardContent className={isMapFullscreen ? "flex-1 p-0" : ""}>
+              <div className={isMapFullscreen ? "w-full h-full" : "h-96"}>
+                <div className="w-full h-full rounded-lg bg-gray-100 border-2 border-dashed flex items-center justify-center relative z-20 overflow-hidden touch-auto">
+                  {selectedPlot ? (
+                    <div className="w-full h-full">
+                      <MapComponent 
+                        key={`map-${isMapFullscreen ? 'fullscreen' : 'normal'}`}  // Force re-render on fullscreen change
+                        plot={currentPlot} 
+                        farmer={currentFarmer}
+                      />
+                    </div>
+                  ) : (
+                    <p>Pilih plot untuk melihat peta</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
