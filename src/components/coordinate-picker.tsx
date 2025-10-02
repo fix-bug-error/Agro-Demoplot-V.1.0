@@ -64,7 +64,7 @@ export function CoordinatePicker({
   const [selectedPosition, setSelectedPosition] = useState<[number, number] | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [basemap, setBasemap] = useState<'osm' | 'google'>('osm');
-  const [drawnPolygon, setDrawnPolygon] = useState<any | null>(null); // Using any here as L.Polygon needs proper import
+  const [drawnPolygon, setDrawnPolygon] = useState<L.Polygon | null>(null);
   const [activeMode, setActiveMode] = useState<'marker' | 'polygon' | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
 
@@ -82,7 +82,7 @@ export function CoordinatePicker({
 
   // Function to calculate the area of a polygon using a simple approximation for small areas
   // This method converts lat/lng differences to meters, then uses the shoelace formula
-  const calculatePolygonArea = (coords: { lat: number; lng: number }[]) => {
+  const calculatePolygonArea = (coords: L.LatLng[]) => {
     if (coords.length < 3) return 0;
 
     // Use a simple planar approximation for small areas like farm plots
@@ -120,7 +120,7 @@ export function CoordinatePicker({
     return area / 10000;
   };
 
-  const handlePolygonCreated = (e: { layer: any }) => {
+  const handlePolygonCreated = (e: { layer: L.Polygon }) => {
     // Store the drawn polygon
     setDrawnPolygon(e.layer);
     
@@ -137,25 +137,27 @@ export function CoordinatePicker({
     }
     
     // Convert to GeoJSON format
+    // Determine the actual type of coordinates and handle accordingly
+    const flatCoords = Array.isArray(coordinates[0]) ? coordinates[0] as L.LatLng[] : coordinates as L.LatLng[];
     const geoJson = {
       type: "Polygon",
-      coordinates: [coordinates.map((coord: { lat: number; lng: number }) => [coord.lng, coord.lat])]
+      coordinates: [flatCoords.map((coord: L.LatLng) => [coord.lng, coord.lat])]
     };
     
     // Calculate centroid of the polygon
     let centroidLat = 0;
     let centroidLng = 0;
-    if (coordinates.length > 0) {
-      coordinates.forEach((coord: { lat: number; lng: number }) => {
+    if (flatCoords.length > 0) {
+      flatCoords.forEach((coord: L.LatLng) => {
         centroidLat += coord.lat;
         centroidLng += coord.lng;
       });
-      centroidLat /= coordinates.length;
-      centroidLng /= coordinates.length;
+      centroidLat /= flatCoords.length;
+      centroidLng /= flatCoords.length;
     }
     
     // Calculate area using the planar approximation method
-    const areaHectares = Math.max(0.001, parseFloat(calculatePolygonArea(coordinates).toFixed(4)));
+    const areaHectares = Math.max(0.001, parseFloat(calculatePolygonArea(flatCoords).toFixed(4)));
     const demoPlotAreaHectares = parseFloat(areaHectares.toFixed(4)); // Same as land area, not 10%
     
     console.log("Final area values:", {
