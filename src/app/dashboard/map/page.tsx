@@ -104,6 +104,7 @@ export default function MapPage() {
     number_of_shade_trees: 0,
     productivity: 0
   });
+  const [polygonData, setPolygonData] = useState<Record<string, unknown> | unknown[] | string | null>(null);
   
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
@@ -147,7 +148,9 @@ export default function MapPage() {
         altitude: parseFloat(newPlotData.altitude.toString()) || 0,
         number_of_coffee: parseInt(newPlotData.number_of_coffee.toString()) || 0,
         number_of_shade_trees: parseInt(newPlotData.number_of_shade_trees.toString()) || 0,
-        productivity: parseFloat(newPlotData.productivity.toString()) || 0
+        productivity: parseFloat(newPlotData.productivity.toString()) || 0,
+        // Include polygon data if available
+        polygon: polygonData ? JSON.stringify(polygonData) : null
       };
 
       // Submit to API
@@ -181,13 +184,22 @@ export default function MapPage() {
           number_of_shade_trees: 0,
           productivity: 0
         });
+        setPolygonData(null);
         
         // Show success alert
         setShowSuccessAlert(true);
         setTimeout(() => setShowSuccessAlert(false), 3000);
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Gagal menambahkan plot");
+        // Try to get error details from response, but handle if response is not JSON
+        let errorMessage = "Gagal menambahkan plot";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text or default message
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error("Error adding plot:", error);
@@ -713,7 +725,7 @@ export default function MapPage() {
                   <Input
                     id="plot_name"
                     value={newPlotData.plot_name}
-                    onChange={(e) => setNewPlotData({...newPlotData, plot_name: e.target.value})}
+                    onChange={(e) => setNewPlotData(prevData => ({...prevData, plot_name: e.target.value}))}
                     placeholder="Masukkan nama plot"
                   />
                 </div>
@@ -722,7 +734,7 @@ export default function MapPage() {
                   <Label htmlFor="farmer_id">Petani</Label>
                   <Select
                     value={newPlotData.farmer_id.toString()}
-                    onValueChange={(value) => setNewPlotData({...newPlotData, farmer_id: parseInt(value)})}
+                    onValueChange={(value) => setNewPlotData(prevData => ({...prevData, farmer_id: parseInt(value)}))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih petani" />
@@ -743,70 +755,48 @@ export default function MapPage() {
                 <Input
                   id="location_name"
                   value={newPlotData.location_name}
-                  onChange={(e) => setNewPlotData({...newPlotData, location_name: e.target.value})}
+                  onChange={(e) => setNewPlotData(prevData => ({...prevData, location_name: e.target.value}))}
                   placeholder="Masukkan lokasi plot"
                 />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="area_hectares">Luas Lahan (ha)</Label>
-                  <Input
-                    id="area_hectares"
-                    type="number"
-                    step="any"
-                    value={newPlotData.area_hectares}
-                    onChange={(e) => setNewPlotData({...newPlotData, area_hectares: parseFloat(e.target.value) || 0})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="demoplot_hectares">Luas Demoplot (ha)</Label>
-                  <Input
-                    id="demoplot_hectares"
-                    type="number"
-                    step="any"
-                    value={newPlotData.demoplot_hectares}
-                    onChange={(e) => setNewPlotData({...newPlotData, demoplot_hectares: parseFloat(e.target.value) || 0})}
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="latitude">Koordinat Lintang</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    value={newPlotData.latitude}
-                    onChange={(e) => setNewPlotData({...newPlotData, latitude: parseFloat(e.target.value) || 0})}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="longitude">Koordinat Bujur</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    value={newPlotData.longitude}
-                    onChange={(e) => setNewPlotData({...newPlotData, longitude: parseFloat(e.target.value) || 0})}
-                  />
-                </div>
               </div>
               
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <CoordinatePicker 
                     onCoordinatesChange={(lat, lng) => {
-                      setNewPlotData({
-                        ...newPlotData,
+                      setNewPlotData(prevData => ({
+                        ...prevData,
                         latitude: lat,
                         longitude: lng
+                      }));
+                    }}
+                    onPolygonChange={(data) => {
+                      console.log("Polygon data received in map page:", data);
+                      // Store polygon data and update form fields with calculated values
+                      setPolygonData(data.polygon);
+                      
+                      // Update the form with centroid coordinates and areas using functional update
+                      setNewPlotData(prevData => {
+                        const updatedData = {
+                          ...prevData,
+                          latitude: parseFloat(data.centroid.lat.toFixed(6)),
+                          longitude: parseFloat(data.centroid.lng.toFixed(6)),
+                          area_hectares: parseFloat(data.area_hectares.toFixed(4)),
+                          demoplot_hectares: parseFloat(data.area_hectares.toFixed(4)) // Set demoplot area equal to land area
+                        };
+                        
+                        console.log("Updating form with polygon data:", updatedData);
+                        return updatedData;
                       });
+                      
+                      console.log("Received polygon data:", data);
                     }}
                   />
+                  {polygonData && (
+                    <div className="bg-green-100 border border-green-200 text-green-800 px-3 py-2 rounded-md text-sm flex items-center">
+                      ✓ Polygon tersimpan
+                    </div>
+                  )}
                   <TooltipProvider>
                     <ShadcnTooltip>
                       <TooltipTrigger asChild>
@@ -829,13 +819,111 @@ export default function MapPage() {
                 </div>
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="area_hectares">Luas Lahan (ha)</Label>
+                  <Input
+                    id="area_hectares"
+                    type="number"
+                    step="any"
+                    value={newPlotData.area_hectares}
+                    onChange={(e) => {
+                      // Only update if polygon data is not available, to avoid overriding calculated area
+                      if (!polygonData) {
+                        setNewPlotData(prevData => ({
+                          ...prevData,
+                          area_hectares: parseFloat(e.target.value) || 0
+                        }));
+                      }
+                    }}
+                    disabled={!!polygonData} // Disable input when polygon data is available
+                  />
+                  {polygonData && (
+                    <p className="text-xs text-green-600 dark:text-green-400">✓ Diisi otomatis dari polygon</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="demoplot_hectares">Luas Demoplot (ha)</Label>
+                  <Input
+                    id="demoplot_hectares"
+                    type="number"
+                    step="any"
+                    value={newPlotData.demoplot_hectares}
+                    onChange={(e) => {
+                      // Only update if polygon data is not available, to avoid overriding calculated area
+                      if (!polygonData) {
+                        setNewPlotData(prevData => ({
+                          ...prevData,
+                          demoplot_hectares: parseFloat(e.target.value) || 0
+                        }));
+                      }
+                    }}
+                    disabled={!!polygonData} // Disable input when polygon data is available
+                  />
+                  {polygonData && (
+                    <p className="text-xs text-green-600 dark:text-green-400">✓ Diisi otomatis dari polygon</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="latitude">Koordinat (Lintang)</Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    value={newPlotData.latitude}
+                    onChange={(e) => {
+                      // Only update if polygon data is not available, to avoid overriding calculated coordinates
+                      if (!polygonData) {
+                        setNewPlotData(prevData => ({
+                          ...prevData,
+                          latitude: parseFloat(e.target.value) || 0
+                        }));
+                      }
+                    }}
+                    disabled={!!polygonData} // Disable input when polygon data is available
+                  />
+                  {polygonData && (
+                    <p className="text-xs text-green-600 dark:text-green-400">✓ Diisi otomatis dari polygon</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="longitude">Koordinat (Bujur)</Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    value={newPlotData.longitude}
+                    onChange={(e) => {
+                      // Only update if polygon data is not available, to avoid overriding calculated coordinates
+                      if (!polygonData) {
+                        setNewPlotData(prevData => ({
+                          ...prevData,
+                          longitude: parseFloat(e.target.value) || 0
+                        }));
+                      }
+                    }}
+                    disabled={!!polygonData} // Disable input when polygon data is available
+                  />
+                  {polygonData && (
+                    <p className="text-xs text-green-400">✓ Diisi otomatis dari polygon</p>
+                  )}
+                </div>
+              </div>
+              
+              
+              
               <div className="space-y-2">
                 <Label htmlFor="altitude">Ketinggian (mdpl)</Label>
                 <Input
                   id="altitude"
                   type="number"
                   value={newPlotData.altitude}
-                  onChange={(e) => setNewPlotData({...newPlotData, altitude: parseInt(e.target.value) || 0})}
+                  onChange={(e) => setNewPlotData(prevData => ({...prevData, altitude: parseInt(e.target.value) || 0}))}
                 />
               </div>
               
@@ -844,7 +932,7 @@ export default function MapPage() {
                 <Input
                   id="list_of_plants"
                   value={newPlotData.list_of_plants}
-                  onChange={(e) => setNewPlotData({...newPlotData, list_of_plants: e.target.value})}
+                  onChange={(e) => setNewPlotData(prevData => ({...prevData, list_of_plants: e.target.value}))}
                   placeholder="Masukkan jenis tanaman"
                 />
               </div>
@@ -856,7 +944,7 @@ export default function MapPage() {
                     id="number_of_coffee"
                     type="number"
                     value={newPlotData.number_of_coffee}
-                    onChange={(e) => setNewPlotData({...newPlotData, number_of_coffee: parseInt(e.target.value) || 0})}
+                    onChange={(e) => setNewPlotData(prevData => ({...prevData, number_of_coffee: parseInt(e.target.value) || 0}))}
                   />
                 </div>
                 
@@ -866,7 +954,7 @@ export default function MapPage() {
                     id="number_of_shade_trees"
                     type="number"
                     value={newPlotData.number_of_shade_trees}
-                    onChange={(e) => setNewPlotData({...newPlotData, number_of_shade_trees: parseInt(e.target.value) || 0})}
+                    onChange={(e) => setNewPlotData(prevData => ({...prevData, number_of_shade_trees: parseInt(e.target.value) || 0}))}
                   />
                 </div>
               </div>
@@ -878,20 +966,11 @@ export default function MapPage() {
                   type="number"
                   step="any"
                   value={newPlotData.productivity}
-                  onChange={(e) => setNewPlotData({...newPlotData, productivity: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setNewPlotData(prevData => ({...prevData, productivity: parseFloat(e.target.value) || 0}))}
                 />
               </div>
             </div>
             
-            {/* Success Alert */}
-            {showSuccessAlert && (
-              <Alert className="bg-green-100 border-green-200 text-green-800 mb-4">
-                <AlertDescription className="flex items-center gap-2">
-                  <span>✓</span>
-                  <span>Plot berhasil ditambahkan!</span>
-                </AlertDescription>
-              </Alert>
-            )}
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddPlotDialogOpen(false)}>
@@ -904,6 +983,19 @@ export default function MapPage() {
           </DialogContent>
         </Dialog>
         
+        {/* Success Alert */}
+        {showSuccessAlert && (
+          <div className="fixed top-4 right-4 z-50">
+            <Alert className="bg-green-100 border-green-200 text-green-800">
+              <AlertDescription className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span>Plot berhasil ditambahkan!</span>
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
         
       </div>
     </TooltipProvider>

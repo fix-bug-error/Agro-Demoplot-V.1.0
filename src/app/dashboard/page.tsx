@@ -96,6 +96,20 @@ type SoilPoint = {
   const [soilData, setSoilData] = useState<SoilPoint[]>([]);
   const [soilDataLoading, setSoilDataLoading] = useState(false);
 
+  // Define the API response type for pest monitoring to handle both field names
+  interface APIPestResponse {
+    id: number;
+    plot_id: number;
+    threat_type: string;
+    threat_name: string;
+    scientific_name: string;
+    status: string;
+    description: string;
+    image_url?: string | null; // May be present in some responses
+    photo_url?: string | null; // May be present in HPK encyclopedia entries
+    detected_at: string;
+  }
+
   // Fetch soil data when selected plot or depth changes
   useEffect(() => {
     const fetchSoilData = async () => {
@@ -280,13 +294,27 @@ type SoilPoint = {
         const plotsData = Array.isArray(plotsResData) ? plotsResData : (plotsResData.data || []);
         const farmersData = Array.isArray(farmersResData) ? farmersResData : (farmersResData.data || []);
         const climateData = Array.isArray(climateResData) ? climateResData : (climateResData.data || []);
-        const pestData = Array.isArray(pestResData) ? pestResData : (pestResData.data || []);
+        
+        // Normalize pest data to handle both field names (image_url and photo_url)
+        const pestResArray = Array.isArray(pestResData) ? pestResData : (pestResData.data || []);
+        const normalizedPestData = pestResArray.map((item: APIPestResponse) => ({
+          id: item.id,
+          threat_name: item.threat_name || "",
+          threat_type: item.threat_type || "",
+          status: item.status || "",
+          description: item.description || "",
+          image_url: item.photo_url || item.image_url || null, // Handle both field names
+          scientific_name: item.scientific_name || "",
+          plot_id: item.plot_id || 0,
+          detected_at: item.detected_at || ""
+        }));
+        
         const recommendationsData = Array.isArray(recommendationsResData) ? recommendationsResData : (recommendationsResData.data || []);
         
         setPlots(plotsData);
         setFarmers(farmersData);
         setClimateData(climateData);
-        setPestMonitoring(pestData);
+        setPestMonitoring(normalizedPestData);
         setRecommendations(recommendationsData);
         
         // Set default selected plot

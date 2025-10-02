@@ -129,6 +129,8 @@ export default function FarmerPage() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addFarmerGender, setAddFarmerGender] = useState<string>("");
   const [addFarmerEducation, setAddFarmerEducation] = useState<string>("");
+  const [editFarmerGender, setEditFarmerGender] = useState<string>("");
+  const [editFarmerEducation, setEditFarmerEducation] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [farmerToDelete, setFarmerToDelete] = useState<number | null>(null);
   // Fetch data on component mount
@@ -249,6 +251,8 @@ export default function FarmerPage() {
   
   const handleEditFarmer = (farmer: Farmer) => {
     setFarmerToEdit(farmer);
+    setEditFarmerGender(farmer.gender);
+    setEditFarmerEducation(farmer.education);
     setEditDialogOpen(true);
   };
   const handleDeleteFarmer = async (id: number) => {
@@ -750,8 +754,9 @@ export default function FarmerPage() {
               <div className="space-y-2">
                 <Label htmlFor="edit_gender">Jenis Kelamin</Label>
                 <Select 
-                  defaultValue={farmerToEdit.gender} 
+                  value={editFarmerGender}
                   onValueChange={(value) => {
+                    setEditFarmerGender(value);
                     if (farmerToEdit) {
                       setFarmerToEdit({...farmerToEdit, gender: value});
                     }
@@ -771,8 +776,9 @@ export default function FarmerPage() {
               <div className="space-y-2">
                 <Label htmlFor="edit_education">Pendidikan</Label>
                 <Select 
-                  defaultValue={farmerToEdit.education} 
+                  value={editFarmerEducation}
                   onValueChange={(value) => {
+                    setEditFarmerEducation(value);
                     if (farmerToEdit) {
                       setFarmerToEdit({...farmerToEdit, education: value});
                     }
@@ -820,8 +826,8 @@ export default function FarmerPage() {
                   const fullName = (document.getElementById('edit_full_name') as HTMLInputElement)?.value || farmerToEdit.full_name;
                   const nationalId = (document.getElementById('edit_national_id') as HTMLInputElement)?.value || farmerToEdit.national_id;
                   const birthDate = (document.getElementById('edit_birth_date') as HTMLInputElement)?.value || farmerToEdit.date_of_birth;
-                  const gender = (document.getElementById('edit_gender') as HTMLInputElement)?.value || farmerToEdit.gender;
-                  const education = (document.getElementById('edit_education') as HTMLInputElement)?.value || farmerToEdit.education;
+                  const gender = editFarmerGender || farmerToEdit.gender;
+                  const education = editFarmerEducation || farmerToEdit.education;
                   const phone = (document.getElementById('edit_phone') as HTMLInputElement)?.value || farmerToEdit.phone_number;
                   const address = (document.getElementById('edit_address') as HTMLInputElement)?.value || farmerToEdit.address;
                   const group = (document.getElementById('edit_group') as HTMLInputElement)?.value || farmerToEdit.farmer_group;
@@ -906,13 +912,18 @@ export default function FarmerPage() {
                 key={index} 
                 className="flex flex-col items-center cursor-pointer"
                 onClick={() => {
-                  // Update the farmerToEdit object with the new avatar
+                  const avatarUrl = `/avatar/${avatar}`;
+                  
+                  // Update the farmerToEdit object with the new avatar (for editing)
                   if (farmerToEdit) {
                     setFarmerToEdit({
                       ...farmerToEdit,
-                      photo_url: `/avatar/${avatar}`
+                      photo_url: avatarUrl
                     });
                   }
+                  
+                  // Update the currentAvatar state (for adding new farmers)
+                  setCurrentAvatar(avatarUrl);
                   
                   setAvatarDialogOpen(false);
                 }}
@@ -938,7 +949,15 @@ export default function FarmerPage() {
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex flex-col items-center gap-4">
-            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-32 h-32" />
+            {currentAvatar ? (
+              <img 
+                src={currentAvatar} 
+                alt="Selected avatar" 
+                className="w-32 h-32 rounded-xl object-cover border-2 border-gray-200"
+              />
+            ) : (
+              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-32 h-32" />
+            )}
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
@@ -1066,7 +1085,7 @@ export default function FarmerPage() {
               address: address,
               farmer_group: group,
               photo_url: currentAvatar || '',
-              profile: `Halo, nama saya ${fullName}. Saya adalah seorang petani yang berdedikasi dalam mengelola lahan kopi.`
+              profile: `Halo, nama saya ${fullName}. Saya adalah seorang petani yang berdedikasi dalam mengelola lahan kopi. Saya telah berkecimpung di bidang pertanian selama bertahun-tahun dan selalu berusaha menerapkan metode terbaik untuk menghasilkan kopi berkualitas tinggi.`
               };
 
 

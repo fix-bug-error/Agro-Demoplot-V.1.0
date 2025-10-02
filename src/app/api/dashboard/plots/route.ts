@@ -2,6 +2,31 @@ import { createSupabaseServerClient } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 import type { Plot } from "@/types";
 
+export async function POST(request: Request) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    
+    const body = await request.json();
+    
+    // Insert the new plot
+    const { data, error } = await supabase
+      .from('plots')
+      .insert([body])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error("Error adding plot:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    console.error("Unexpected error in POST:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function GET() {
   try {
     const supabase = await createSupabaseServerClient();

@@ -96,8 +96,34 @@ export default function AIRecommendationsPage() {
     fetchData();
   }, []);
 
-  // Filter recommendations based on selected plot
-  const filteredRecommendations = recommendations.filter(rec => rec.plot_id === selectedPlot);
+  // Get the most recent recommendation per plot
+  const getLatestRecommendations = () => {
+    // Group recommendations by plot_id
+    const grouped: Record<number, Recommendation[]> = {};
+    
+    recommendations.forEach(rec => {
+      if (!grouped[rec.plot_id]) {
+        grouped[rec.plot_id] = [];
+      }
+      grouped[rec.plot_id].push(rec);
+    });
+    
+    // For each plot, get the most recent recommendation
+    const latestPerPlot: Recommendation[] = [];
+    for (const plotId in grouped) {
+      const plotRecs = grouped[Number(plotId)];
+      // Sort by date descending and take the first (most recent)
+      plotRecs.sort((a, b) => 
+        new Date(b.recommendation_date).getTime() - new Date(a.recommendation_date).getTime()
+      );
+      latestPerPlot.push(plotRecs[0]);
+    }
+    
+    // Return only the most recent recommendation for the selected plot
+    return latestPerPlot.filter(rec => rec.plot_id === selectedPlot);
+  };
+
+  const filteredRecommendations = getLatestRecommendations();
   
   // Get current plot
   const currentPlot = plots.find(plot => plot.id === selectedPlot) || plots[0];
