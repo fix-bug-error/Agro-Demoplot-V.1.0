@@ -19,6 +19,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import styles from '@/app/dashboard/map/map.module.css';
+import { MapPin, VectorSquare } from "lucide-react";
 
 // Fix for default marker icons in Leaflet
 delete (L.Icon.Default.prototype as { _getIconUrl?: () => string })._getIconUrl;
@@ -338,7 +339,10 @@ export function CoordinatePicker({
               }
             }}
           >
-            Gunakan Lokasi Saat Ini
+            <div className="flex items-center justify-center">
+              <MapPin className="h-4 w-4" />
+              <span className="sr-only md:not-sr-only ml-2">Gunakan Lokasi Saat Ini</span>
+            </div>
           </Button>
           <Button 
             type="button" 
@@ -350,7 +354,8 @@ export function CoordinatePicker({
               setSelectedPosition(null);
             }}
           >
-            Gambar Polygon
+            <VectorSquare className="h-4 w-4 mr-2" />
+            <span className="sr-only md:not-sr-only ml-2">Gambar Polygon</span>
           </Button>
           <Button 
             onClick={() => {
@@ -365,7 +370,7 @@ export function CoordinatePicker({
             }}
             className="flex-1"
           >
-            Simpan Pilihan
+            Simpan
           </Button>
         </div>
         
